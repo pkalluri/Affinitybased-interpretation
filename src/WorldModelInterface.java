@@ -8,4 +8,6 @@ public interface WorldModelInterface {
 
 	double probabilityOf(DescriptionUnit validDescriptionUnit, ActionKnowledge actionKnowledge) throws Exception;
 
+	void reviewBeliefs();
+
 }

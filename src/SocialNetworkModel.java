@@ -23,7 +23,7 @@ public class SocialNetworkModel implements WorldModelInterface {
 		 */
 		Pair<String> actingPair = new Pair<String>(descriptionUnit.actor, descriptionUnit.actedUpon);
 		if (!this.relationships.containsKey(actingPair)) {
-			relationships.put(actingPair, new Relationship_TypeProbModel());
+			relationships.put(actingPair, new Relationship_TypeProbModel(RelationshipType.values()));
 		}
 //		if (  !characters.contains(descriptionUnit.actor)  ) {
 //			for (String character : characters) {
@@ -42,16 +42,6 @@ public class SocialNetworkModel implements WorldModelInterface {
 //		}
 		
 		RelationshipInterface relationship = relationships.get(actingPair);
-		
-		/***
-		 * Debug code: when a particular unit is going wrong
-		 */
-//		System.out.println(descriptionUnit.action);
-//		if (descriptionUnit.action.equals("inside")) {
-//			@SuppressWarnings("unused")
-//			int  i = 0;
-//		}
-		
 		relationship.update(actionKnowledge, this.number_updates);
 //		System.out.println("after " + descriptionUnit + ": " + relationships);
 	}
@@ -109,6 +99,20 @@ public class SocialNetworkModel implements WorldModelInterface {
 			return relationship.probabilityOf(descriptionUnit, actionKnowledge) ;
 		} else {
 			return DEFAULT_PROBABILITY;
+		}
+	}
+
+	@Override
+	public void reviewBeliefs() {
+		double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 3;
+		boolean allBeliefsAreNeutral = true;
+		for (Map.Entry<Pair<String>, RelationshipInterface> entry : this.relationships.entrySet()) {//if all beliefs are neutral
+//			if (!entry.getValue().hasOpinion()) { //rewrite as neutral relationship
+//				System.out.println(entry);
+//				RelationshipInterface neutralRelationshipModel = new Relationship_TypeProbModel(RelationshipType.values(), RelationshipType.Neutral, BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO);
+//				entry.setValue(neutralRelationshipModel);
+//				System.out.println("After review: " + this.relationships);
+//			}
 		}
 	}
 }

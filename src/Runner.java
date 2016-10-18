@@ -22,39 +22,54 @@ public class Runner {
 //	private static Map<Integer,Integer> Answers;;
 	
 
-	private void loadKnowledgeDB(String fileName) throws URISyntaxException, IOException {
-        List<String> lines = getLines(fileName);	
-    	this.actionKnowledgebase = new HashMap<String, ActionKnowledge>();
+	private void loadKnowledgeDB(String fileName, boolean verbose) throws URISyntaxException, IOException {
+		List<RelationshipType> ORDERED_RELATIONSHIP_TYPES = Arrays.asList(RelationshipType.Friend, RelationshipType.Enemy, RelationshipType.Neutral);
+        double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 3;
+		
+		List<String> lines = getLines(fileName);	
     	
+		this.actionKnowledgebase = new HashMap<String, ActionKnowledge>();
     	for (String line : lines) {
 			String trimmedLine = line.trim();
 			if (!trimmedLine.isEmpty()) {
 				String[] args = trimmedLine.split("\\s+");
-//				for (String arg : args) {
+//				if (verbose) {
+//					for (String arg : args) {
 ////					System.out.println(arg);
+//					}
 //				}
-				switch (args[1]) {
-					case "+":
-//						System.out.println(args[0] + " " + "+");
-						actionKnowledgebase.put(args[0], new ActionKnowledge(RelationshipType.Friend));
-						break;
-					case "-":
-//						System.out.println(args[0] + " " + "-");
-						actionKnowledgebase.put(args[0], new ActionKnowledge(RelationshipType.Enemy));
-						break;
-					case "--":
-//						System.out.println(args[0] + " " + "-");
-						actionKnowledgebase.put(args[0], new ActionKnowledge(RelationshipType.Friend, .1, RelationshipType.Enemy, .9));
-						break;
-					case "++":
-//						System.out.println(args[0] + " " + "-");
-						actionKnowledgebase.put(args[0], new ActionKnowledge(RelationshipType.Friend, .9, RelationshipType.Enemy, .1));
-						break;
-					case "0":
-//						System.out.println(args[0] + " " + "0");
-						actionKnowledgebase.put(args[0], new ActionKnowledge());
-						break;
+				//Set up map as neutral
+				Map<RelationshipType, Boolean> likelyGivenRelationshipType = new HashMap<RelationshipType, Boolean>();
+				for (RelationshipType relationshipType: ORDERED_RELATIONSHIP_TYPES) {
+					likelyGivenRelationshipType.put(relationshipType, false);
 				}
+				if (args.length >1) { //there is more information to read
+					for (char c : args[1].toCharArray()) {
+						switch(c) {
+							case '=':
+								likelyGivenRelationshipType.put(RelationshipType.Friend, true);
+								break;
+							case '-':
+		//						System.out.println(args[0] + " " + "-");
+								likelyGivenRelationshipType.put(RelationshipType.Enemy, true);
+								break;
+		//					case "--":
+		////						System.out.println(args[0] + " " + "-");
+		//						actionKnowledgebase.put(args[0], new ActionKnowledge(RelationshipType.Friend, .1, RelationshipType.Enemy, .9));
+		//						break;
+		//					case "++":
+		////						System.out.println(args[0] + " " + "-");
+		//						actionKnowledgebase.put(args[0], new ActionKnowledge(RelationshipType.Friend, .9, RelationshipType.Enemy, .1));
+		//						break;
+							case '0':
+		//						System.out.println(args[0] + " " + "0");
+								likelyGivenRelationshipType.put(RelationshipType.Neutral, true);
+								break;
+						}//done with char
+					}//done with all chars on this line
+				}
+				if(verbose) {System.out.println(likelyGivenRelationshipType);}
+				this.actionKnowledgebase.put(args[0], new ActionKnowledge(likelyGivenRelationshipType, false, BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO));
 			}
     	}//done with all lines
 	}
@@ -350,97 +365,98 @@ public class Runner {
 	 * Get a knowledge.
 	 * @param actionKnowledgebase
 	 */
+	@SuppressWarnings("unused")
 	private void loadKnowledgebase() {
-		Map<String, ActionKnowledge> actionKnowledgebase = new HashMap<String, ActionKnowledge>();
-		RelationshipType friend = RelationshipType.Friend;
-		RelationshipType enemy = RelationshipType.Enemy;
-		
-		/***
-		 * First test task
-		 */
-		actionKnowledgebase.put("hits", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("chases", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("playsWith", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("angryWith", new ActionKnowledge(friend, .25, enemy, .75) );
-		
-		/***
-		 * First 10 tasks
-		 */
-		actionKnowledgebase.put("creepUpOn", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("flinch", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("startle", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("happyThat", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("see", new ActionKnowledge(friend, .5, enemy, .5) );
-		
-		actionKnowledgebase.put("approach", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("shake", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("unhappy", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("afraid", new ActionKnowledge(friend, .25, enemy, .75) );
-		
-		actionKnowledgebase.put("ignore", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("annoy", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("happyThat", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("see", new ActionKnowledge(friend, .5, enemy, .5) );
-		
-		actionKnowledgebase.put("inside", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("outside", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("knocks", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("open", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("close", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("dislike", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("like", new ActionKnowledge(friend, .75, enemy, .25) );
-		
-		actionKnowledgebase.put("argueWith", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("exit", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("moveTo", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("happy", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("upset", new ActionKnowledge(friend, .25, enemy, .75) );
-		
-		actionKnowledgebase.put("greet", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("goal", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("defend", new ActionKnowledge(friend, .75, enemy, .25) );
-		
-		actionKnowledgebase.put("examine", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("angry", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("curious", new ActionKnowledge(friend, .5, enemy, .5) );
-		
-		actionKnowledgebase.put("hit", new ActionKnowledge(friend, .25, enemy, .75) );
-		
-		actionKnowledgebase.put("poke", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("annoy", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("prevent", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("playWith", new ActionKnowledge(friend, .75, enemy, .25) );
-		
-		actionKnowledgebase.put("turn", new ActionKnowledge(friend, .5, enemy, .5) );
-		
-		actionKnowledgebase.put("meander", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("inside", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("tired", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("fearThat", new ActionKnowledge(friend, .25, enemy, .75) );
-		
-		actionKnowledgebase.put("dance", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("surprise", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("excitedThat", new ActionKnowledge(friend, .75, enemy, .25) );
-		
-		actionKnowledgebase.put("console", new ActionKnowledge(friend, .75, enemy, .25) );
-		
-		actionKnowledgebase.put("jump", new ActionKnowledge(friend, .25, enemy, .75) );
-		
-		actionKnowledgebase.put("asleep", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("forgotToDo", new ActionKnowledge(friend, .5, enemy, .5) );
-
-		actionKnowledgebase.put("enter", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("hug", new ActionKnowledge(friend, .75, enemy, .25) );
-		actionKnowledgebase.put("angryAt", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("chase", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("attack", new ActionKnowledge(friend, .25, enemy, .75) );
-		actionKnowledgebase.put("knock", new ActionKnowledge(friend, .5, enemy, .5) );
-		actionKnowledgebase.put("excited", new ActionKnowledge(friend, .75, enemy, .25) );
-		
-		actionKnowledgebase.put("excited", new ActionKnowledge(friend, .75, enemy, .25) );
-
-
-		this.actionKnowledgebase = actionKnowledgebase;
+//		Map<String, ActionKnowledge> actionKnowledgebase = new HashMap<String, ActionKnowledge>();
+//		RelationshipType friend = RelationshipType.Friend;
+//		RelationshipType enemy = RelationshipType.Enemy;
+//		
+//		/***
+//		 * First test task
+//		 */
+//		actionKnowledgebase.put("hits", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("chases", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("playsWith", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("angryWith", new ActionKnowledge(friend, .25, enemy, .75) );
+//		
+//		/***
+//		 * First 10 tasks
+//		 */
+//		actionKnowledgebase.put("creepUpOn", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("flinch", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("startle", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("happyThat", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("see", new ActionKnowledge(friend, .5, enemy, .5) );
+//		
+//		actionKnowledgebase.put("approach", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("shake", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("unhappy", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("afraid", new ActionKnowledge(friend, .25, enemy, .75) );
+//		
+//		actionKnowledgebase.put("ignore", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("annoy", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("happyThat", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("see", new ActionKnowledge(friend, .5, enemy, .5) );
+//		
+//		actionKnowledgebase.put("inside", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("outside", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("knocks", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("open", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("close", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("dislike", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("like", new ActionKnowledge(friend, .75, enemy, .25) );
+//		
+//		actionKnowledgebase.put("argueWith", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("exit", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("moveTo", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("happy", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("upset", new ActionKnowledge(friend, .25, enemy, .75) );
+//		
+//		actionKnowledgebase.put("greet", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("goal", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("defend", new ActionKnowledge(friend, .75, enemy, .25) );
+//		
+//		actionKnowledgebase.put("examine", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("angry", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("curious", new ActionKnowledge(friend, .5, enemy, .5) );
+//		
+//		actionKnowledgebase.put("hit", new ActionKnowledge(friend, .25, enemy, .75) );
+//		
+//		actionKnowledgebase.put("poke", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("annoy", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("prevent", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("playWith", new ActionKnowledge(friend, .75, enemy, .25) );
+//		
+//		actionKnowledgebase.put("turn", new ActionKnowledge(friend, .5, enemy, .5) );
+//		
+//		actionKnowledgebase.put("meander", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("inside", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("tired", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("fearThat", new ActionKnowledge(friend, .25, enemy, .75) );
+//		
+//		actionKnowledgebase.put("dance", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("surprise", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("excitedThat", new ActionKnowledge(friend, .75, enemy, .25) );
+//		
+//		actionKnowledgebase.put("console", new ActionKnowledge(friend, .75, enemy, .25) );
+//		
+//		actionKnowledgebase.put("jump", new ActionKnowledge(friend, .25, enemy, .75) );
+//		
+//		actionKnowledgebase.put("asleep", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("forgotToDo", new ActionKnowledge(friend, .5, enemy, .5) );
+//
+//		actionKnowledgebase.put("enter", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("hug", new ActionKnowledge(friend, .75, enemy, .25) );
+//		actionKnowledgebase.put("angryAt", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("chase", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("attack", new ActionKnowledge(friend, .25, enemy, .75) );
+//		actionKnowledgebase.put("knock", new ActionKnowledge(friend, .5, enemy, .5) );
+//		actionKnowledgebase.put("excited", new ActionKnowledge(friend, .75, enemy, .25) );
+//		
+//		actionKnowledgebase.put("excited", new ActionKnowledge(friend, .75, enemy, .25) );
+//
+//
+//		this.actionKnowledgebase = actionKnowledgebase;
 	}
 	
 	/***
@@ -563,9 +579,11 @@ public class Runner {
 		/***
 		 * Setup task map, answer map, and knowledgebase from file
 		 */
+		VERBOSE = false;
 		runner.loadTaskDB("/TRICOPA.txt", VERBOSE);
 		runner.loadAnswerDB("/Answers.txt");
-		runner.loadKnowledgeDB("/Knowledge.txt"); 
+		VERBOSE = false;
+		runner.loadKnowledgeDB("/Knowledge.txt", VERBOSE); 
 		System.out.println(runner.actionKnowledgebase);
 		
 		VERBOSE = true;

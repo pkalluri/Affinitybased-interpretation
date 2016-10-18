@@ -1,5 +1,5 @@
 
 public enum RelationshipType {
 
-	Friend, Enemy
+	Friend, Enemy, Neutral
 }

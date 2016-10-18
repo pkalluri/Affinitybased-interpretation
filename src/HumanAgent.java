@@ -1,3 +1,4 @@
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +43,7 @@ public class HumanAgent {
 		}
 		if (verbose) {System.out.println(this.memoryToString());}
 		for (DescriptionUnit descriptionUnit : premise.getDecriptionUnits() ) {
-			if (verbose) {System.out.println(descriptionUnit);}
+//			if (verbose) {System.out.println(descriptionUnit);}
 			DescriptionUnit validDescriptionUnit = this.getValidDescriptionUnit(descriptionUnit, forceCharacters); //get valid unit
 			if (validDescriptionUnit != null) {
 				if (verbose) {System.out.print(validDescriptionUnit + " ");}
@@ -53,7 +54,9 @@ public class HumanAgent {
 				}
 			
 				//update based on the valid unit
-				relationshipInfo.update(validDescriptionUnit, actionKnowledgebase.get(descriptionUnit.action));
+				ActionKnowledge actionKnolwedge = actionKnowledgebase.get(descriptionUnit.action);
+				if (verbose) {System.out.print(actionKnolwedge + " ");}
+				relationshipInfo.update(validDescriptionUnit, actionKnolwedge);
 				if (verbose) {System.out.println(relationshipInfo);}
 				
 				this.updateMemory(validDescriptionUnit); //update memory based on this unit
@@ -62,6 +65,7 @@ public class HumanAgent {
 				this.updateMemory(descriptionUnit); //update memory based on original unit
 			}
 		}//done with units
+		relationshipInfo.reviewBeliefs();
 		return relationshipInfo;
 	}
 	
@@ -150,7 +154,7 @@ public class HumanAgent {
 		if (!this.last_character.equals(latestChar)) {
 			this.secondToLast_character = last_character;
 			this.last_character = latestChar;
-			if (verbose) {System.out.println("Updated " + this.memoryToString());}
+//			if (verbose) {System.out.println("Updated " + this.memoryToString());}
 			return true;
 		}
 //		if (verbose) {System.out.println("Not updated " + this.memoryToString());}
@@ -173,7 +177,7 @@ public class HumanAgent {
 			this.last_character = remembered_last_character;
 			
 			double currChoice_distance = this.distance(currChoice, relationshipInfo);
-			System.out.println("Distance to premise: " + currChoice_distance);
+			System.out.println("Distance to premise: " + new DecimalFormat("##.##").format(currChoice_distance) );
 			if (currChoice_distance < bestChoice_distance) {
 				bestChoiceNumber = currChoiceNumber;
 				bestChoice = currChoice;
@@ -187,7 +191,7 @@ public class HumanAgent {
 				bestChoiceNumber = -1;
 			}
 		}
-		System.out.println(bestChoiceNumber);
+//		System.out.println(bestChoiceNumber);
 		return bestChoiceNumber;
 	}
 	
@@ -208,12 +212,13 @@ public class HumanAgent {
 			
 			if (verbose) {System.out.println("CONSIDERING CHOICE");}
 			double probabilityOfThisChoice = 1;
+			double sumOfEventProbs = 0;
 			int numTimesUpdated = 0;
 			
 			this.setMemory(remembered_secondToLast_character, remembered_last_character);
-			
+			int numEvents = 0;
 			for (DescriptionUnit descriptionUnit : choice.getDecriptionUnits() ) {
-				if (verbose) {System.out.println(descriptionUnit);}
+//				if (verbose) {System.out.println(descriptionUnit);}
 //				System.out.println(this.memoryToString());
 //				System.out.println("Original unit: " + descriptionUnit);
 				DescriptionUnit validDescriptionUnit = this.getValidDescriptionUnit(descriptionUnit, forceCharacters); //get valid unit
@@ -227,9 +232,12 @@ public class HumanAgent {
 					}
 				
 					//how likely is the valid unit
-					double probabilityOfThisUnit = relationshipInfo.probabilityOf(validDescriptionUnit, actionKnowledgebase.get(descriptionUnit.action));
+					ActionKnowledge actionKnowledge = actionKnowledgebase.get(descriptionUnit.action);
+					if(verbose) {System.out.print(actionKnowledge + " ");}
+					double probabilityOfThisUnit = relationshipInfo.probabilityOf(validDescriptionUnit,actionKnowledge );
+					sumOfEventProbs += probabilityOfThisUnit;
 					probabilityOfThisChoice *= probabilityOfThisUnit;
-					System.out.println(probabilityOfThisChoice);
+					System.out.println(new DecimalFormat("##.#").format(probabilityOfThisUnit));
 					numTimesUpdated ++;
 					this.updateMemory(validDescriptionUnit); //update memory based on this unit
 				} else {
@@ -237,15 +245,16 @@ public class HumanAgent {
 				}
 			}//done with units
 			
+			double eventProbForNormalizing = sumOfEventProbs/(double)numTimesUpdated;
 			for (int i = numTimesUpdated; i < longestDescriptionLength; i++) {
-				probabilityOfThisChoice *= probabilityOfThisChoice;
-				System.out.println("Normalizing " + probabilityOfThisChoice);
+				System.out.println("Normalizing " + new DecimalFormat("##.#").format(eventProbForNormalizing));
+				probabilityOfThisChoice *= eventProbForNormalizing;
 			}//done normalizing
 			
 			if (numTimesUpdated == 0) {
 				probabilityOfThisChoice = -1; //do not consider complete disjoint
 			}
-			System.out.println("Probability of choice: " + probabilityOfThisChoice);
+			System.out.println("Probability of choice: " + new DecimalFormat("##.#").format(probabilityOfThisChoice));
 			
 			//update best choice
 			if (probabilityOfThisChoice == probabilityOfBestChoice) {
@@ -282,7 +291,9 @@ public class HumanAgent {
 //		RelationshipInfoInterface relationshipInfo = extractRelationshipInfo(premise, false, false); //At first
 		boolean forceCharacters = true;
 		WorldModelInterface relationshipInfo = extractRelationshipInfo(premise, forceCharacters, false); //Later
-		return chooseBetweenPlausibleAlternatives(relationshipInfo, possibleChoices, this.secondToLast_character, this.last_character, forceCharacters);
+		int chosen = this.chooseBetweenPlausibleAlternatives(relationshipInfo, possibleChoices, this.secondToLast_character, this.last_character, forceCharacters);
+		if (verbose) {System.out.println("CHOSEN: " + chosen);}
+		return chosen;
 	}
 
 	public void setVerbose(boolean verbose) {

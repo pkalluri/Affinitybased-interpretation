@@ -1,126 +1,126 @@
-accelerate 0
-bolt -
-creep -
-dance +
-decelerate 0
+accelerate 
+bolt -0
+creep -+
+dance =
+decelerate 
 flinch -
-jump 0
-limp 0
-meander 0
-nod +
-roam 0
-run 0
+jump 
+limp 
+meander 
+nod =
+roam =0
+run 
 shake -
-stroll +
-turn 0
-wave +
+stroll =0
+turn -0
+wave =
 
-accompany +
-approach 0
+accompany =
+approach =-0
 argueWith -
 avoid -
 block -
 bother -
-chase 0
+chase =-0
 close -
 creepUpOn -
 escape -
 examine 0
 fight -
-flirtWith +
-follow +
+flirtWith =
+follow =
 hit -
-huddleWith +
-hug +
+huddleWith =
+hug =
 ignore -
-kiss +
-knock 0
-lead +
-leave -
-open 0
-playWith +
-poke 0
-pull +
+kiss =
+knock 
+lead =
+leave -0
+open 
+playWith =
+poke =-
+pull =-
 push -
 scratch -
-talkTo +
-tickle +
+talkTo =
+tickle =
 
-atLoc 0
-enter 0
-exit 0
-inside 0
-moveTo 0
-outside 0
+atLoc 
+enter =-0
+exit =-
+inside 
+moveTo 
+outside 
 
 attack -
 bother -
 bully -
-console +
+console =
 defend -
-discipline +
-goodbye +
-greet +
-help +
+discipline =
+goodbye =
+greet =
+help =
 kidnap -
-possess 0
+possess =-0
 prevent -
-quickly 0
+quickly 
 rob -
-startle -
-wakeUp 0
+startle -0
+wakeUp 
 
-agree +
+agree =
 disagree -
-forgotToDo 0
-goal 0
-hear 0
-know 0
-knowledgeGoal 0
-lost 0
-see 0
-surprise 0
-waitFor +
+forgotToDo =-0
+goal =-0
+hear =-0
+know =-0
+knowledgeGoal =
+lost =0
+see =-0
+surprise =-0
+waitFor =
 
 afraid -
 angry -
 angryAt -
 annoy -
 asleep 0
-bored -
-cold 0
-conflicted -
+bored -0
+cold =-0
+conflicted =
 curious 0
-disabled 0
+disabled =-0
 disappointed -
 dislike -
-embarrassed 0
-energized +
-excited +
-excitedThat +
-exhausted 0
+embarrassed =0
+energized =
+excited =
+excitedThat =
+exhausted =-0
 fear -
 fearThat -
-happy +
-happyThat +
+happy =
+happyThat =
 hate -
-hot 0
-injured -
+hot =-0
+injured =-0
 jealous -
-like +
-love +
+like =
+love =
 polite 0
 reject -
-relaxed +
-relief +
-sleepy 0
-tired 0
+relaxed =0
+relief =
+sleepy 
+tired 
 unhappy -
 
-acquaintance +
+acquaintance =0
 enemies -
-friend +
-parent +
-sibling +
+friend =
+parent =-
+sibling =
 stranger 0
 
