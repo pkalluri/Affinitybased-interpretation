@@ -105,14 +105,12 @@ public class SocialNetworkModel implements WorldModelInterface {
 	@Override
 	public void reviewBeliefs() {
 		double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 3;
-		boolean allBeliefsAreNeutral = true;
 		for (Map.Entry<Pair<String>, RelationshipInterface> entry : this.relationships.entrySet()) {//if all beliefs are neutral
-//			if (!entry.getValue().hasOpinion()) { //rewrite as neutral relationship
-//				System.out.println(entry);
-//				RelationshipInterface neutralRelationshipModel = new Relationship_TypeProbModel(RelationshipType.values(), RelationshipType.Neutral, BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO);
-//				entry.setValue(neutralRelationshipModel);
-//				System.out.println("After review: " + this.relationships);
-//			}
+			if (!entry.getValue().hasOpinion()) { //rewrite as neutral relationship
+				RelationshipInterface neutralRelationshipModel = new Relationship_TypeProbModel(RelationshipType.values(), RelationshipType.Neutral, BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO);
+				entry.setValue(neutralRelationshipModel);
+				System.out.println("After review: " + this.relationships);
+			}
 		}
 	}
 }

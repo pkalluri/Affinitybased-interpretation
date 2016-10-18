@@ -125,8 +125,9 @@ public class Relationship_TypeProbModel implements RelationshipInterface {
 	@Override
 	public boolean hasOpinion() {
 		boolean hasOpinion = false;
+		int numEntries = this.beliefs.size();
 		for (Double val : this.beliefs.values()) {
-			if (val != 1./this.beliefs.size()) {
+			if ((val - 1./(double)numEntries) >.001) { //has opinion
 				hasOpinion = true;
 			}
 		}
