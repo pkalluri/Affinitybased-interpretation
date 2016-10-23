@@ -15,35 +15,57 @@ public class SocialNetworkModel implements WorldModelInterface {
 	}
 	
 	@Override
-	public void update(DescriptionUnit descriptionUnit, ActionKnowledge actionKnowledge) {
-		this.number_updates ++;
-//		System.out.println(descriptionUnit.action);
+	public void update(DescriptionUnit descriptionUnit, ActionKnowledge actionKnowledge, boolean saveRecords, Map<Pair<String>, Map<Integer,Map<RelationshipType,Double>>> recordHolder) {
+
 		/***
 		 * Add newly emerged pairs
 		 */
 		Pair<String> actingPair = new Pair<String>(descriptionUnit.actor, descriptionUnit.actedUpon);
-		if (!this.relationships.containsKey(actingPair)) {
-			relationships.put(actingPair, new Relationship_TypeProbModel(RelationshipType.values()));
+		/***
+		 * Only add this pair
+		 */
+//		if (!this.relationships.containsKey(actingPair)) {
+//			relationships.put(actingPair, new Relationship_TypeProbModel(RelationshipType.values()));
+//		}
+		/***
+		 * Add all implied pairs
+		 */
+		if (  !characters.contains(descriptionUnit.actor)  ) {
+			for (String character : characters) {
+				relationships.put(new Pair<String>(character,descriptionUnit.actor)  , new Relationship_TypeProbModel(RelationshipType.values()));
+			}//done adding pairs
+//			relationships.put(new Pair<String>(descriptionUnit.actor,descriptionUnit.actor)  , new Relationship_TypeProbModel());
+			characters.add(descriptionUnit.actor);
 		}
-//		if (  !characters.contains(descriptionUnit.actor)  ) {
-//			for (String character : characters) {
-//				relationships.put(new Pair<String>(character,descriptionUnit.actor)  , new Relationship_TypeProbModel());
-//			}//done adding pairs
-////			relationships.put(new Pair<String>(descriptionUnit.actor,descriptionUnit.actor)  , new Relationship_TypeProbModel());
-//			characters.add(descriptionUnit.actor);
-//		}
-//		
-//		if (  (!characters.contains(descriptionUnit.actedUpon))  ) {
-//			for (String character : characters) {
-//				relationships.put(new Pair<String>(character,descriptionUnit.actedUpon)  , new Relationship_TypeProbModel());
-//			}//done adding pairs
-////			relationships.put(new Pair<String>(descriptionUnit.actedUpon,descriptionUnit.actedUpon)  , new Relationship_TypeProbModel());
-//			characters.add(descriptionUnit.actedUpon);
-//		}
+		if (  (!characters.contains(descriptionUnit.actedUpon))  ) {
+			for (String character : characters) {
+				relationships.put(new Pair<String>(character,descriptionUnit.actedUpon)  , new Relationship_TypeProbModel(RelationshipType.values()));
+			}//done adding pairs
+//			relationships.put(new Pair<String>(descriptionUnit.actedUpon,descriptionUnit.actedUpon)  , new Relationship_TypeProbModel());
+			characters.add(descriptionUnit.actedUpon);
+		}
 		
+		/***
+		 * Update the acting pair's relationship model
+		 */
 		RelationshipInterface relationship = relationships.get(actingPair);
-		relationship.update(actionKnowledge, this.number_updates);
-//		System.out.println("after " + descriptionUnit + ": " + relationships);
+		relationship.update(actionKnowledge, this.number_updates + 1);
+		
+		/***
+		 * Save if save parameter is ON.
+		 */
+		if (saveRecords) { 
+//			relationship.saveCurrentState(recordHolder);
+			Map<Integer,Map<RelationshipType,Double>> timeToBeliefs;
+			if (!recordHolder.containsKey(actingPair)) {
+				timeToBeliefs = new HashMap<Integer,Map<RelationshipType,Double>>();
+				recordHolder.put(actingPair, timeToBeliefs);
+			} else {
+				timeToBeliefs = recordHolder.get(actingPair);
+			}
+			timeToBeliefs.put(number_updates, relationship.getCopyOfBeliefs());
+		}
+		this.number_updates ++;
 	}
 
 	private boolean hasRelationship(String actor, String actedUpon) {
@@ -103,13 +125,34 @@ public class SocialNetworkModel implements WorldModelInterface {
 	}
 
 	@Override
-	public void reviewBeliefs() {
-		double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 3;
+	public void reviewBeliefs(boolean saveRecords, Map<Pair<String>, Map<Integer, Map<RelationshipType, Double>>> recordHolder) {
+		this.assumeUninformedRelationshipAreNeutralRelationships(saveRecords, recordHolder);
+		
+	}
+	
+	private void assumeUninformedRelationshipAreNeutralRelationships(boolean saveRecords, Map<Pair<String>, Map<Integer,Map<RelationshipType,Double>>> recordHolder) {
+		double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 5;
 		for (Map.Entry<Pair<String>, RelationshipInterface> entry : this.relationships.entrySet()) {//if all beliefs are neutral
 			if (!entry.getValue().hasOpinion()) { //rewrite as neutral relationship
 				RelationshipInterface neutralRelationshipModel = new Relationship_TypeProbModel(RelationshipType.values(), RelationshipType.Neutral, BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO);
 				entry.setValue(neutralRelationshipModel);
-				System.out.println("After review: " + this.relationships);
+//				System.out.println("After review: " + this.relationships);
+				/***
+				 * Save if save parameter is ON.
+				 */
+				if (saveRecords) { 
+//					relationship.saveCurrentState(recordHolder);
+					Map<Integer,Map<RelationshipType,Double>> timeToBeliefs;
+					Pair<String> actingPair = entry.getKey();
+					if (!recordHolder.containsKey(actingPair)) {
+						timeToBeliefs = new HashMap<Integer,Map<RelationshipType,Double>>();
+						recordHolder.put(actingPair, timeToBeliefs);
+					} else {
+						timeToBeliefs = recordHolder.get(actingPair);
+					}
+					timeToBeliefs.put(number_updates, neutralRelationshipModel.getCopyOfBeliefs());
+				}
+				
 			}
 		}
 	}

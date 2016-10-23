@@ -134,4 +134,13 @@ public class Relationship_TypeProbModel implements RelationshipInterface {
 		return hasOpinion;
 	}
 
+	@Override
+	public Map<RelationshipType,Double> getCopyOfBeliefs() {
+		Map<RelationshipType, Double> copy = new HashMap<RelationshipType,Double>();
+		for (Map.Entry<RelationshipType, Double> entry : this.beliefs.entrySet()) {
+			copy.put(entry.getKey(), new Double(entry.getValue().doubleValue()));
+		}
+		return copy;
+	}
+
 }

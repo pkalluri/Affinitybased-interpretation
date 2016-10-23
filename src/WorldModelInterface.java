@@ -1,13 +1,13 @@
-import java.util.List;
+import java.util.Map;
 
 public interface WorldModelInterface {
 
-	void update(DescriptionUnit descriptionUnit, ActionKnowledge actionKnowledge);
+	void update(DescriptionUnit descriptionUnit, ActionKnowledge actionKnowledge, boolean saveRecords, Map<Pair<String>, Map<Integer,Map<RelationshipType,Double>>> recordHolder);
 
 	double distanceFrom(WorldModelInterface premiseRelationshipInfo);
 
 	double probabilityOf(DescriptionUnit validDescriptionUnit, ActionKnowledge actionKnowledge) throws Exception;
 
-	void reviewBeliefs();
+	public void reviewBeliefs(boolean saveRecords, Map<Pair<String>, Map<Integer, Map<RelationshipType, Double>>> recordHolder);
 
 }

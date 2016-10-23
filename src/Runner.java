@@ -1,4 +1,7 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -7,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,9 +26,19 @@ public class Runner {
 //	private static Map<Integer,Integer> Answers;;
 	
 
+	private Description getDescriptionFromFile(String fileName) throws URISyntaxException, IOException {
+		List<String> lines = getLines(fileName);	
+		String linesTogether = "";
+		for (String line : lines) {
+			linesTogether += line.trim();
+		}
+		return this.getDescription(linesTogether);
+	}
+	
+	
 	private void loadKnowledgeDB(String fileName, boolean verbose) throws URISyntaxException, IOException {
 		List<RelationshipType> ORDERED_RELATIONSHIP_TYPES = Arrays.asList(RelationshipType.Friend, RelationshipType.Enemy, RelationshipType.Neutral);
-        double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 3;
+        double BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO = 5;
 		
 		List<String> lines = getLines(fileName);	
     	
@@ -147,7 +161,7 @@ public class Runner {
 				
 	}
 	
-	private static Description getDescription(String descriptionLine) {
+	private Description getDescription(String descriptionLine) {
 //		String LITERAL_FORMAT = "\\w+(?:,\\s*\\w+)*";
 		List<DescriptionUnit> descriptionUnits = new ArrayList<DescriptionUnit>();
 		
@@ -507,11 +521,19 @@ public class Runner {
 //		}
 //		return easyViewPerformance;
 //	}
-	private static String getSpreadsheetView(Map<Integer, Integer> performance) {
+	private static String getSpreadsheetViewOfPerformance(Map<Integer, Integer> performance) {
 		String sheet = "";
 		for (int i = 1; i<100; i++) {
 			if (performance.containsKey(i)) {
-				sheet+= performance.get(i) + "\n";
+				if (performance.get(i) == -1) { //wrong
+					sheet+= "-1" + "\n";
+				}
+				else if (performance.get(i) == 0) { //tie
+					sheet+= '0' + "\n";
+				}
+				else if (performance.get(i) == 1) { //right
+					sheet+= '1' + "\n";
+				}
 			} else {
 				sheet += "X\n";;
 			}
@@ -552,74 +574,175 @@ public class Runner {
 		return (chosen == this.answerMap.get(taskNumber));
 	}
 
+	
+
+	@SuppressWarnings("unused")
+	private Set<Integer> getTaskNumbers(String fileName) throws URISyntaxException, IOException {
+		List<String> lines = getLines(fileName);	
+    	
+		Set<Integer> tasksWithSelectedWords = new HashSet<Integer>();
+    	for (String line : lines) {
+			String trimmedLine = line.trim();
+			if (!trimmedLine.isEmpty()) {
+				String[] args = trimmedLine.split("\\s+");
+				String action = args[0];
+				
+				for (Map.Entry<Integer, TricopaTask> entry : this.tricopaTaskMap.entrySet()) {
+					for (DescriptionUnit unit : entry.getValue().getPremise().getDecriptionUnits()) {
+						if (action.equals(unit.action)) {
+							tasksWithSelectedWords.add(entry.getKey());
+						}
+					} //done with units in this premise
+					
+					for (Description choice : entry.getValue().getPossibleChoices()) {
+						for (DescriptionUnit unit : choice.getDecriptionUnits()) {
+							if (action.equals(unit.action)) {
+								tasksWithSelectedWords.add(entry.getKey());
+							}
+						} //done with units in this description
+					}//done with all choices
+					
+					
+				}//done with all tasks
+			}
+    	}//done with all lines
+		return tasksWithSelectedWords;
+	}
+
+
+	private String getSpreadsheetViewOfRelationshipUpdates(Map<Integer, Map<RelationshipType, Double>> timeToBeliefs) {
+		String toPrint = "";
+		int minTime = Collections.min(timeToBeliefs.keySet());
+		int maxTime = Collections.max(timeToBeliefs.keySet());
+		for (int currTime = minTime; currTime<=maxTime; currTime++) {
+			if (timeToBeliefs.containsKey(currTime)) {
+				toPrint += currTime + "\t";
+				Map<RelationshipType, Double> currBelief = timeToBeliefs.get(currTime);
+				for (RelationshipType relationshipType : RelationshipType.values()) {
+					toPrint +=  currBelief.get(relationshipType) + "\t";
+				}//done with all relationship types
+				toPrint += "\n";
+			}
+		}
+		return toPrint;
+	}
+	
+	
 	/***
 	 * Run test.
 	 * @param args
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		boolean VERBOSE = false;
-
 		/***
-		 * Setup task map from db
+		 * SET PARAMETERS.
 		 */
-//		Set<Integer> TASKS_TO_ADD = GetRange(1,21);
-//		Set<Integer> TASKS_TO_REMOVE = new HashSet<Integer>(Arrays.asList(11,20));
-//		Runner.LoadAllTasks();
-//		Runner.LoadAllAnswers();
-//		Map<Integer,TricopaTask> tricopaTaskMap = new HashMap<Integer,TricopaTask>();
-//		AddTasks(tricopaTaskMap, TASKS_TO_ADD);
-//		System.out.println(tricopaTaskMap.size());
-//		for (Integer task_number : TASKS_TO_REMOVE) {
-//			tricopaTaskMap.remove(task_number);
-//		}
+		boolean VERBOSE = false;
 		
+		boolean TRI_COPA = true;
+		boolean RUN_SIMULATION = true;
+		
+		boolean MODELING_STORY = false;
+		
+		
+		
+		
+		/***
+		 * Begin.
+		 */
 		Runner runner = new Runner();
 
-		/***
-		 * Setup task map, answer map, and knowledgebase from file
-		 */
-		VERBOSE = false;
-		runner.loadTaskDB("/TRICOPA.txt", VERBOSE);
-		runner.loadAnswerDB("/Answers.txt");
-		VERBOSE = false;
-		runner.loadKnowledgeDB("/Knowledge.txt", VERBOSE); 
-		System.out.println(runner.actionKnowledgebase);
 		
-		VERBOSE = true;
-
 		/***
-		 * Run simulation
+		 * Model the story.
 		 */
-		//Select task set
-//		Set<Integer> taskNumsToDo = new HashSet<Integer>(Arrays.asList(14));
-		Set<Integer> taskNumsToDo = Runner.GetRange(1, 100);
-		Map<Integer,TricopaTask> tasksToDo = runner.getTasks(taskNumsToDo);
-		Set<Integer> TASKS_TO_REMOVE = new HashSet<Integer>();
-		TASKS_TO_REMOVE.addAll(Arrays.asList(11,20,22,43,44,49,91, 94,95,99)); //1-CHARACTER TASKS
-//		TASKS_TO_REMOVE.addAll(Arrays.asList(4)); //ASYMMETRIC TASKS
-		TASKS_TO_REMOVE.addAll(Arrays.asList(47,50,56,74,76,77,80,84,86,92,94,99)); //TASKS WITH NOT LITERAL
-		for (Integer task_number : TASKS_TO_REMOVE) {
-			tasksToDo.remove(task_number);
+		if (MODELING_STORY) {
+			/***
+			 * Set up simulation
+			 */
+			String KNOWLEDGE_FILENAME = "/Story-Knowledge.txt";
+			Description description = runner.getDescriptionFromFile("/Description.txt");//get description from file
+			
+//			/***
+//			 * Fill knowledge file.
+//			 */
+//			BufferedWriter output;
+//			output = new BufferedWriter(new FileWriter(KNOWLEDGE_FILENAME, true));  //clears file every time
+//			for (DescriptionUnit unit : description.getDecriptionUnits()) {
+////				System.out.println(unit.action);
+//				output.append(unit.action);
+//				output.newLine();
+//			}
+//			output.close();
+			
+			/***
+			 * Run simulation.
+			 */
+			runner.loadKnowledgeDB(KNOWLEDGE_FILENAME, VERBOSE); //read knowledge
+			HumanAgent humanAgent = new HumanAgent(runner.actionKnowledgebase);//create reader agent
+			humanAgent.setVerbose(VERBOSE);
+
+			Map<Pair<String>, Map<Integer,Map<RelationshipType,Double>>> recordHolder = new HashMap<Pair<String>, Map<Integer,Map<RelationshipType,Double>>>();
+			humanAgent.extractRelationshipInfo(description, true, false, true, recordHolder);//create evolving relationship model
+			Pair<String> relationship = new Pair<String>("G","LMD");
+			System.out.println(runner.getSpreadsheetViewOfRelationshipUpdates(recordHolder.get(relationship)));
 		}
-//		System.out.println(tasksToDo);
-
-		//Create knowledgeable agent
-		HumanAgent humanAgent = new HumanAgent(runner.actionKnowledgebase);
-		humanAgent.setVerbose(VERBOSE);
-		Map<Integer,Integer> performance = runner.getHumanPerformance(humanAgent, tasksToDo, VERBOSE);
 		
 		
-		/***
-		 * Print metrics
-		 */
-		System.out.print("\n" +	performance );
-//		System.out.println("\n" + Runner.getEasyView(performance));
-		System.out.println("\n" + Runner.getSpreadsheetView(performance));
-		System.out.println("\n" + Runner.getScoreStatement(performance));
+		
+		if (TRI_COPA) {
+			/***
+			 * Setup task map, answer map, and knowledgebase from file
+			 */
+//			VERBOSE = false;
+			runner.loadTaskDB("/TRICOPA.txt", VERBOSE);
+			runner.loadAnswerDB("/Answers.txt");
+//			VERBOSE = false;
+			runner.loadKnowledgeDB("/Knowledge.txt", VERBOSE); 
+			
+			/***
+			 * To quickly print tri-copa-related excel columns for my accumulating data spreadsheet.
+			 */
+//			System.out.println(runner.actionKnowledgebase);
+//			boolean reverse = true;
+//			System.out.println(SpreadsheetHelper.prevValueIfIn(runner.getTaskNumbers("/WordsToSearchFor.txt"), 100, 10, reverse));
 
+			
+			VERBOSE = true;
+			/***
+			 * Run simulation
+			 */
+			if (RUN_SIMULATION) {
+				//Select task set
+		//		Set<Integer> taskNumsToDo = new HashSet<Integer>(Arrays.asList(72));
+				Set<Integer> taskNumsToDo = Runner.GetRange(1, 100);
+				Map<Integer,TricopaTask> tasksToDo = runner.getTasks(taskNumsToDo);
+				Set<Integer> TASKS_TO_REMOVE = new HashSet<Integer>();
+				TASKS_TO_REMOVE.addAll(Arrays.asList(11,20,22,43,44,49,91, 94,95,99)); //1-CHARACTER TASKS
+		//		TASKS_TO_REMOVE.addAll(Arrays.asList(4)); //ASYMMETRIC TASKS
+				TASKS_TO_REMOVE.addAll(Arrays.asList(47,50,56,74,76,77,80,84,86,92,94,99)); //TASKS WITH NOT LITERAL
+				for (Integer task_number : TASKS_TO_REMOVE) {
+					tasksToDo.remove(task_number);
+				}
+		//		System.out.println(tasksToDo);
+		
+				//Create knowledgeable agent
+				HumanAgent humanAgent = new HumanAgent(runner.actionKnowledgebase);
+				humanAgent.setVerbose(VERBOSE);
+				Map<Integer,Integer> performance = runner.getHumanPerformance(humanAgent, tasksToDo, VERBOSE);
+				
+				
+				/***
+				 * Print metrics
+				 */
+				System.out.print("\n" +	performance );
+		//		System.out.println("\n" + Runner.getEasyView(performance));
+				System.out.println("\n" + Runner.getSpreadsheetViewOfPerformance(performance));
+				System.out.println("\n" + Runner.getScoreStatement(performance));
+			}//done with simulation
+		}//done with tricopa
+		
 	}
-	
 
 
 

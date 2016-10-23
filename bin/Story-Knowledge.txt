@@ -1,0 +1,34 @@
+isWife =
+isKing
+isSuccessor
+isEnemy -
+defeats -
+becomesHappy =
+areWeird
+meet
+dance =
+talks
+predict
+executes -
+rewards =
+asksForMorePower =
+persuades =
+loves =
+wantsToPlease =
+plotsToMurder -
+plotsToMurder -
+invitesToDinner =
+compliments =
+goesToBed
+murders -
+murders -
+flees -
+murders -
+hallucinates
+becomesDistraught -
+hasBadDreams -
+commitesSuicide -
+attacks -
+curses -
+refusesToSurrender -
+kills -

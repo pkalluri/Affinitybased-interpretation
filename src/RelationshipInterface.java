@@ -1,3 +1,4 @@
+import java.util.Map;
 
 public interface RelationshipInterface {
 
@@ -10,5 +11,7 @@ public interface RelationshipInterface {
 	public double probabilityOf(DescriptionUnit descriptionUnit, ActionKnowledge actionKnowledge) throws Exception;
 
 	public boolean hasOpinion();
+
+	public Map<RelationshipType,Double> getCopyOfBeliefs();
 
 }

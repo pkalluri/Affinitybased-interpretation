@@ -36,13 +36,14 @@ public class HumanAgent {
 		}
 	}
 	
-	private WorldModelInterface extractRelationshipInfo(Description premise, boolean forceCharacters, boolean continuing) throws Exception {
+	
+	public WorldModelInterface extractRelationshipInfo(Description description, boolean forceCharacters, boolean continuing, boolean saveRecords, Map<Pair<String>, Map<Integer,Map<RelationshipType,Double>>> recordHolder) throws Exception {
 		WorldModelInterface relationshipInfo = new SocialNetworkModel();
 		if (!continuing) {
 			this.setMemory("_", "_");
 		}
 		if (verbose) {System.out.println(this.memoryToString());}
-		for (DescriptionUnit descriptionUnit : premise.getDecriptionUnits() ) {
+		for (DescriptionUnit descriptionUnit : description.getDecriptionUnits() ) {
 //			if (verbose) {System.out.println(descriptionUnit);}
 			DescriptionUnit validDescriptionUnit = this.getValidDescriptionUnit(descriptionUnit, forceCharacters); //get valid unit
 			if (validDescriptionUnit != null) {
@@ -56,7 +57,7 @@ public class HumanAgent {
 				//update based on the valid unit
 				ActionKnowledge actionKnolwedge = actionKnowledgebase.get(descriptionUnit.action);
 				if (verbose) {System.out.print(actionKnolwedge + " ");}
-				relationshipInfo.update(validDescriptionUnit, actionKnolwedge);
+				relationshipInfo.update(validDescriptionUnit, actionKnolwedge, saveRecords, recordHolder);
 				if (verbose) {System.out.println(relationshipInfo);}
 				
 				this.updateMemory(validDescriptionUnit); //update memory based on this unit
@@ -65,7 +66,7 @@ public class HumanAgent {
 				this.updateMemory(descriptionUnit); //update memory based on original unit
 			}
 		}//done with units
-		relationshipInfo.reviewBeliefs();
+		relationshipInfo.reviewBeliefs(saveRecords, recordHolder);
 		return relationshipInfo;
 	}
 	
@@ -163,7 +164,7 @@ public class HumanAgent {
 
 	@SuppressWarnings("unused")
 	private int chooseBetweenPlausibleAlternatives_FindDistance(WorldModelInterface relationshipInfo,
-			List<Description> possibleChoices, String remembered_secondToLast_character, String remembered_last_character) throws Exception {
+			List<Description> possibleChoices, String remembered_secondToLast_character, String remembered_last_character, boolean forceCharacters) throws Exception {
 		int bestChoiceNumber = 0;
 		Description bestChoice = null;
 		double bestChoice_distance = Double.MAX_VALUE;
@@ -195,7 +196,7 @@ public class HumanAgent {
 		return bestChoiceNumber;
 	}
 	
-	private int chooseBetweenPlausibleAlternatives(WorldModelInterface relationshipInfo,
+	private int chooseBetweenPlausibleAlternatives(WorldModelInterface worldModel,
 			List<Description> possibleChoices, String remembered_secondToLast_character, String remembered_last_character, boolean forceCharacters) throws Exception {
 				
 		//longest description length
@@ -214,9 +215,9 @@ public class HumanAgent {
 			double probabilityOfThisChoice = 1;
 			double sumOfEventProbs = 0;
 			int numTimesUpdated = 0;
+			boolean anyMatchingPairs = false;
 			
 			this.setMemory(remembered_secondToLast_character, remembered_last_character);
-			int numEvents = 0;
 			for (DescriptionUnit descriptionUnit : choice.getDecriptionUnits() ) {
 //				if (verbose) {System.out.println(descriptionUnit);}
 //				System.out.println(this.memoryToString());
@@ -234,10 +235,11 @@ public class HumanAgent {
 					//how likely is the valid unit
 					ActionKnowledge actionKnowledge = actionKnowledgebase.get(descriptionUnit.action);
 					if(verbose) {System.out.print(actionKnowledge + " ");}
-					double probabilityOfThisUnit = relationshipInfo.probabilityOf(validDescriptionUnit,actionKnowledge );
+//					anyMatchingPairs = relationshipInfo.hasRelationship
+					double probabilityOfThisUnit = worldModel.probabilityOf(validDescriptionUnit,actionKnowledge );
 					sumOfEventProbs += probabilityOfThisUnit;
 					probabilityOfThisChoice *= probabilityOfThisUnit;
-					System.out.println(new DecimalFormat("##.#").format(probabilityOfThisUnit));
+					if(verbose) {System.out.println(new DecimalFormat("##.##").format(probabilityOfThisUnit));}
 					numTimesUpdated ++;
 					this.updateMemory(validDescriptionUnit); //update memory based on this unit
 				} else {
@@ -247,14 +249,16 @@ public class HumanAgent {
 			
 			double eventProbForNormalizing = sumOfEventProbs/(double)numTimesUpdated;
 			for (int i = numTimesUpdated; i < longestDescriptionLength; i++) {
-				System.out.println("Normalizing " + new DecimalFormat("##.#").format(eventProbForNormalizing));
+				System.out.println("Normalizing " + new DecimalFormat("##.##").format(eventProbForNormalizing));
 				probabilityOfThisChoice *= eventProbForNormalizing;
 			}//done normalizing
 			
+//			if(verbose) {System.out.println("Num updates: " + numTimesUpdated);}
 			if (numTimesUpdated == 0) {
 				probabilityOfThisChoice = -1; //do not consider complete disjoint
+//				if(verbose) {System.out.println("Corrected prob: " + probabilityOfThisChoice);}
 			}
-			System.out.println("Probability of choice: " + new DecimalFormat("##.#").format(probabilityOfThisChoice));
+			System.out.println("Probability of choice: " + new DecimalFormat("##.##").format(probabilityOfThisChoice));
 			
 			//update best choice
 			if (probabilityOfThisChoice == probabilityOfBestChoice) {
@@ -281,7 +285,7 @@ public class HumanAgent {
 
 	private double distance(Description currChoice, WorldModelInterface premiseRelationshipInfo) throws Exception {
 //		RelationshipInfoInterface currChoiceRelationshipInfo = extractRelationshipInfo(currChoice, false, false); //At first
-		WorldModelInterface currChoiceRelationshipInfo = extractRelationshipInfo(currChoice, true, true); //Later
+		WorldModelInterface currChoiceRelationshipInfo = extractRelationshipInfo(currChoice, true, true, false, null); //Later
 		return currChoiceRelationshipInfo.distanceFrom(premiseRelationshipInfo);
 	}
 
@@ -290,8 +294,8 @@ public class HumanAgent {
 		System.out.println("REASONING ABOUT PREMISE");
 //		RelationshipInfoInterface relationshipInfo = extractRelationshipInfo(premise, false, false); //At first
 		boolean forceCharacters = true;
-		WorldModelInterface relationshipInfo = extractRelationshipInfo(premise, forceCharacters, false); //Later
-		int chosen = this.chooseBetweenPlausibleAlternatives(relationshipInfo, possibleChoices, this.secondToLast_character, this.last_character, forceCharacters);
+		WorldModelInterface worldModel = extractRelationshipInfo(premise, forceCharacters, false, false, null); //Later
+		int chosen = this.chooseBetweenPlausibleAlternatives(worldModel, possibleChoices, this.secondToLast_character, this.last_character, forceCharacters);
 		if (verbose) {System.out.println("CHOSEN: " + chosen);}
 		return chosen;
 	}
