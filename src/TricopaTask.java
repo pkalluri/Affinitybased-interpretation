@@ -1,45 +1,33 @@
 import java.util.List;
 
+/***
+ * A TricopaTask consists of a premise Scenario and two additional Scenarios that each may or may not logically 
+ * follow from the premise. A TricopaTask is immutable.
+ * 
+ * The TricopaTask format is the format of the Triangle-COPA challenge problems introduced in Maslan et al. (2015).
+ *  
+ * @author pkalluri
+ *
+ */
 public class TricopaTask {
-	private Description premise;
-	private List<Description> possibleChoices;
-	private Description correctChoice;
+	/***
+	 * The premise Scenario
+	 */
+	public final Scenario premise;
 	
-	public TricopaTask(Description premise, List<Description> possibleChoices, Description correctChoice) {
+	/***
+	 * A list containing the two Scenarios that each may or may not logically follow from the premise
+	 */
+	public final List<Scenario> possibleChoices;
+	
+	/***
+	 * Create a TricopaTask consisting of the given premise Scenario and the two additional given Scenarios.
+	 * @param premise the premise Scenario
+	 * @param possibleChoices a list containing the two Scenarios that each may or may not logically follow from the premise 
+	 */
+	public TricopaTask(Scenario premise, List<Scenario> possibleChoices) {
 		this.premise = premise;
 		this.possibleChoices = possibleChoices;
-		this.correctChoice = correctChoice;
-	}
-	
-	public TricopaTask(Description premise, List<Description> possibleChoices) {
-		this.premise = premise;
-		this.possibleChoices = possibleChoices;
-		this.correctChoice = null;
-	}
-	
-
-	public Description getPremise() {
-		return premise;
-	}
-
-	public void setPremise(Description premise) {
-		this.premise = premise;
-	}
-
-	public List<Description> getPossibleChoices() {
-		return possibleChoices;
-	}
-
-	public void setPossibleChoices(List<Description> possibleChoices) {
-		this.possibleChoices = possibleChoices;
-	}
-
-	public Description getCorrectChoice() {
-		return correctChoice;
-	}
-
-	public void setCorrectChoice(Description correctChoice) {
-		this.correctChoice = correctChoice;
 	}
 	
 	@Override

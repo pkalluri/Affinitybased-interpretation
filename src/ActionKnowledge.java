@@ -1,88 +1,89 @@
 import java.text.DecimalFormat;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
+/***
+ * The ActionKnowledge corresponding to a particular action holds the relative observation distribution of that action over the RelationshipTypes.
+ * @author pkalluri
+ *
+ */
 public class ActionKnowledge {
 	/***
-	 * Constraint: Sum of probabilities across all relationship types always equals 1.
+	 * Relative observation distribution (R.O.D.) over the RelationshipTypes.
+	 * Constraint: The sum of the R.O.D. probabilities over the RelationshipTypes always equals 1.
 	 */
-	private Map<RelationshipType,Double> relativeProbsGivenRelationshipType; 
+	private Map<RelationshipType,Double> relativeObservationDistribution; 
 
-	public ActionKnowledge(Map<RelationshipType,Double> relativeProbsGivenRelationshipType) {
-		this.relativeProbsGivenRelationshipType = relativeProbsGivenRelationshipType;
-	}
-	
-	public <T> ActionKnowledge(Map<RelationshipType,T> map, boolean mapOfDoubles, double bigProbabilitySmallProbabilityRatio) {
-		if (mapOfDoubles) {
-			this.relativeProbsGivenRelationshipType = (Map<RelationshipType,Double>) map;
-		} else { //map of booleans
-			Map<RelationshipType,Boolean> likelyGivenRelationshipType = (Map<RelationshipType,Boolean>) map;
+	//////////////////////////////////////////
+	/////// CONSTRUCTORS /////////////////////
+	//////////////////////////////////////////
 
-			this.relativeProbsGivenRelationshipType = ProbabilityMapHelper.createProbabilityMap(likelyGivenRelationshipType, bigProbabilitySmallProbabilityRatio);
-		}
-	}
-		
-	
-
-	//	
-//	public ActionKnowledge(Map<RelationshipType,Boolean> relativeProbsGivenRelationshipType) {
-//	this.relativeProbsGivenRelationshipType = new HashMap<RelationshipType,Double>();
-//	this.relativeProbsGivenRelationshipType.put(RelationshipType.Friend, .5);
-//	this.relativeProbsGivenRelationshipType.put(RelationshipType.Enemy, .5);
-//}
-//	
 	/***
-	 * These assume only 2 rel types.
-	 * @param relationshipType
+	 * Construct the ActionKnowledge containing the given relativeObservationDistribution.
+	 * @param relativeObservationDistribution the relative observation distribution over RelationshipTypes for this ActionKnowledge
 	 */
-//	public ActionKnowledge(RelationshipType a, double aProbability, RelationshipType b, double bProbability) {
-//		this.relativeProbsGivenRelationshipType = new HashMap<RelationshipType,Double>();
-//		this.relativeProbsGivenRelationshipType.put(a, aProbability);
-//		this.relativeProbsGivenRelationshipType.put(b, bProbability);
-//	}
+	public ActionKnowledge(Map<RelationshipType,Double> relativeObservationDistribution) {
+		this.relativeObservationDistribution = relativeObservationDistribution;
+	}
+	
+	/***
+	 * Construct the ActionKnowledge based on the given map from RelationshipTypes to whether this action is 
+	 * likely given the RelationshipType. 
+	 * 
+	 * Interpreted with the constraint that the ratio between two probabilities in a single action's 
+	 * relative observation distribution must always be 1 or the ratioPermittedWithinROD.
+	 * @param likelyGivenRelationshipTypes
+	 * @param ratioPermittedWithinROD the ratio between two probabilities in this action's 
+	 * relative observation distribution must always be 1 or this ratio
+	 */
+	public ActionKnowledge(Map<RelationshipType,Boolean> likelyGivenRelationshipType, double ratioPermittedWithinROD) {
+		this.relativeObservationDistribution = ProbabilityMapUtility.createProbabilityMap(likelyGivenRelationshipType, ratioPermittedWithinROD);
+	}
 
-//	public ActionKnowledge(RelationshipType relationshipType) {
-//		this.relativeProbsGivenRelationshipType = new HashMap<RelationshipType,Double>();
-//		double POSITIVE_BIAS_VALUE = .75;
-//		switch (relationshipType) {
-//			case Friend:
-//				this.relativeProbsGivenRelationshipType.put(RelationshipType.Friend, POSITIVE_BIAS_VALUE);
-//				this.relativeProbsGivenRelationshipType.put(RelationshipType.Enemy, 1-POSITIVE_BIAS_VALUE);
-//				break;
-//			case Enemy:
-//				this.relativeProbsGivenRelationshipType.put(RelationshipType.Enemy, POSITIVE_BIAS_VALUE);
-//				this.relativeProbsGivenRelationshipType.put(RelationshipType.Friend, 1-POSITIVE_BIAS_VALUE);
-//				break;
-//		}
-//	}
+	//////////////////////////////////////////
+	/////// GETTERS //////////////////////////
+	//////////////////////////////////////////
 
+	/***
+	 * Get the relative observation distribution of this action over the RelationshipTypes.
+	 * @return the relative observation distribution of this action over the RelationshipTypes
+	 */
+	public Map<RelationshipType, Double> getProbabilities() {
+		return this.relativeObservationDistribution;
+	}
 
-
+	/***
+	 * Get the relative probability of observation of this action for the given RelationshipType.
+	 * @param relationshipType
+	 * @return the relative probability of observation of this action for the given RelationshipType
+	 */
 	public Double getProbabilityGiven(RelationshipType relationshipType) {
-		return relativeProbsGivenRelationshipType.get(relationshipType);
+		return relativeObservationDistribution.get(relationshipType);
 	}
 	
 	@Override
 	public String toString() {
-		assert valid();
-		String toPrint = "{ ";
-		for (Map.Entry<RelationshipType, Double> entry : this.relativeProbsGivenRelationshipType.entrySet()) {
-			toPrint += entry.getKey().toString().charAt(0) + "=" + new DecimalFormat("##.#").format(entry.getValue()) + " ";
+		assert isValid();
+		String toPrint = "----[action knowledge:";
+		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
+			toPrint += entry.getKey().toString().charAt(0) + "=" + new DecimalFormat("##.##").format(entry.getValue()) + "/";
 		}
-		return toPrint + "}";
+		return toPrint.substring(0, toPrint.length()-1) + "]---->";
 	}
+		
+	//////////////////////////////////////////
+	/////// INTERNAL CHECK ///////////////////
+	//////////////////////////////////////////
 
-	private boolean valid() {
+	/***
+	 * Check all constraints on a valid ActionKnowledge are satisfied.
+	 * @return True iff all constraints on a valid ActionKnowledge are satisfied
+	 */
+	private boolean isValid() {
 		double sum = 0;
-		for (Double val : this.relativeProbsGivenRelationshipType.values()) {
+		for (Double val : this.relativeObservationDistribution.values()) {
 			sum += val;
 		}
 		return sum == 1;
-	}
-
-	public Map<RelationshipType, Double> getProbabilities() {
-		return this.relativeProbsGivenRelationshipType;
 	}
 
 }

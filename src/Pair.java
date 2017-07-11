@@ -1,28 +1,58 @@
 import java.util.HashSet;
 import java.util.Set;
 
+/***
+ * A Pair contains two unordered elements of the same type. A pair is immutable.
+ * 
+ * @author pkalluri
+ * 
+ * @param <E>
+ */
 public class Pair<E>{
-	private Set<E> pair;
+	private final Set<E> pair;
 	
+	/***
+	 * Creates a new pair.
+	 * @param a one element
+	 * @param b another element 
+	 */
 	public Pair(E a, E b) {
 		this.pair = new HashSet<E>();
 		pair.add(a);
 		pair.add(b);
 	}
 	
+	/***
+	 * Test this Pair for equality with another Object.
+	 * 
+	 * @param other the other Object
+	 * @return true iff the other Object is a Pair and the two elements in the first Pair are equal to the two elements in the second Pair
+	 */
 	@Override
 	public boolean equals(Object other){
-		Pair<E> otherPair = (Pair<E>) other;
-		boolean matchesSoFar = true;
-		for (E elt : this.pair) {
-			matchesSoFar = matchesSoFar && (otherPair.pair.contains(elt));
+		if (!(other instanceof Pair)) {
+			return false;
 		}
-		for (E elt : otherPair.pair) {
-			matchesSoFar = matchesSoFar && (this.pair.contains(elt));
+		else {
+			@SuppressWarnings("unchecked")
+			Pair<E> otherPair = (Pair<E>) other;
+			boolean matchesSoFar = true;
+			for (E elt : this.pair) {
+				matchesSoFar = matchesSoFar && (otherPair.pair.contains(elt));
+			}
+			for (E elt : otherPair.pair) {
+				matchesSoFar = matchesSoFar && (this.pair.contains(elt));
+			}
+			return matchesSoFar;
 		}
-		return matchesSoFar;
 	}
 	
+	/***
+	 * Generate a hash code for this Pair.
+	 * The hash code is calculated using both elements of the Pair.
+	 * 
+	 * @return hash code for this Pair
+	 */
 	@Override
 	public int hashCode() {
 		int hash = 0;
@@ -32,6 +62,12 @@ public class Pair<E>{
 		return hash;
 	}
 	
+	/***
+	 * String representation of this Pair.
+	 * The String representation is in the format "( a b )".
+	 * 
+	 * @return String representation of this Pair
+	 */
 	@Override
 	public String toString() {
 		String str = "( ";
@@ -39,7 +75,6 @@ public class Pair<E>{
 			str += elt;
 			str += " ";
 		}
-//		str = Integer.toString(hashCode());
 		return str+")";
 	}
 

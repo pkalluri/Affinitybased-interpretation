@@ -1,6 +1,6 @@
 accelerate 
 bolt -0
-creep -+
+creep -
 dance =
 decelerate 
 flinch -
@@ -13,7 +13,7 @@ run
 shake -
 stroll =0
 turn -0
-wave =
+wave =0
 
 accompany =
 approach =-0
@@ -48,7 +48,7 @@ tickle =
 
 atLoc 
 enter =-0
-exit =-
+exit =0-
 inside 
 moveTo 
 outside 
@@ -59,7 +59,7 @@ bully -
 console =
 defend -
 discipline =
-goodbye =
+goodbye =0
 greet =
 help =
 kidnap -
@@ -89,7 +89,7 @@ annoy -
 asleep 0
 bored -0
 cold =-0
-conflicted =
+conflicted -
 curious 0
 disabled =-0
 disappointed -
