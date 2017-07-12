@@ -1,126 +1,126 @@
 accelerate 
-bolt -0
-creep -
-dance =
+bolt EN
+creep E
+dance F
 decelerate 
-flinch -
+flinch E
 jump 
 limp 
 meander 
-nod =
-roam =0
+nod F
+roam FN
 run 
-shake -
-stroll =0
-turn -0
-wave =0
+shake E
+stroll FN
+turn EN
+wave FN
 
-accompany =
-approach =-0
-argueWith -
-avoid -
-block -
-bother -
-chase =-0
-close -
-creepUpOn -
-escape -
-examine 0
-fight -
-flirtWith =
-follow =
-hit -
-huddleWith =
-hug =
-ignore -
-kiss =
+accompany F
+approach FEN
+argueWith E
+avoid E
+block E
+bother E
+chase FEN
+close E
+creepUpOn E
+escape E
+examine N
+fight E
+flirtWith F
+follow F
+hit E
+huddleWith F
+hug F
+ignore E
+kiss F
 knock 
-lead =
-leave -0
+lead F
+leave EN
 open 
-playWith =
-poke =-
-pull =-
-push -
-scratch -
-talkTo =
-tickle =
+playWith F
+poke FE
+pull FE
+push E
+scratch E
+talkTo F
+tickle F
 
 atLoc 
-enter =-0
-exit =0-
+enter FEN
+exit FNE
 inside 
 moveTo 
 outside 
 
-attack -
-bother -
-bully -
-console =
-defend -
-discipline =
-goodbye =0
-greet =
-help =
-kidnap -
-possess =-0
-prevent -
+attack E
+bother E
+bully E
+console F
+defend E
+discipline F
+goodbye FN
+greet F
+help F
+kidnap E
+possess FEN
+prevent E
 quickly 
-rob -
-startle -0
+rob E
+startle EN
 wakeUp 
 
-agree =
-disagree -
-forgotToDo =-0
-goal =-0
-hear =-0
-know =-0
-knowledgeGoal =
-lost =0
-see =-0
-surprise =-0
-waitFor =
+agree F
+disagree E
+forgotToDo FEN
+goal FEN
+hear FEN
+know FEN
+knowledgeGoal F
+lost FN
+see FEN
+surprise FEN
+waitFor F
 
-afraid -
-angry -
-angryAt -
-annoy -
-asleep 0
-bored -0
-cold =-0
-conflicted -
-curious 0
-disabled =-0
-disappointed -
-dislike -
-embarrassed =0
-energized =
-excited =
-excitedThat =
-exhausted =-0
-fear -
-fearThat -
-happy =
-happyThat =
-hate -
-hot =-0
-injured -
-jealous -
-like =
-love =
-polite 0
-reject -
-relaxed =0
-relief =
+afraid E
+angry E
+angryAt E
+annoy E
+asleep N
+bored EN
+cold FEN
+conflicted E
+curious N
+disabled FEN
+disappointed E
+dislike E
+embarrassed FN
+energized F
+excited F
+excitedThat F
+exhausted FEN
+fear E
+fearThat E
+happy F
+happyThat F
+hate E
+hot FEN
+injured E
+jealous E
+like F
+love F
+polite N
+reject E
+relaxed FN
+relief F
 sleepy 
 tired 
-unhappy -
+unhappy E
 
-acquaintance =0
-enemies -
-friend =
-parent =
-sibling =
-stranger 0
+acquaintance FN
+enemies E
+friend F
+parent F
+sibling F
+stranger N
 

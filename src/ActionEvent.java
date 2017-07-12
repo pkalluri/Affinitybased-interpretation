@@ -32,6 +32,20 @@ public final class ActionEvent {
 	
 	@Override
 	public String toString() {
-		return actor + " " + action + " " + actedUpon;
+		String str = "";
+		if (this.actor == null) {
+			str += "";
+		} else {
+			str += this.actor;
+		}
+		
+		str += " " + this.action + " ";
+		
+		if (this.actedUpon == null) {
+			str += "";
+		} else {
+			str += this.actedUpon;
+		}
+		return str;
 	}
 }

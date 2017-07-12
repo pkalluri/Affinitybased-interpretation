@@ -1,4 +1,3 @@
-(argueWith' E1 BT C)
-(turn' E2 C)
-(exit' E3 C)
-(seq E1 E2 E3)
+(argueWith' E1 Jay Ria)
+(turn' E2 Ria)
+(exit' E3 Ria)

@@ -1,8 +1,13 @@
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -100,6 +105,25 @@ public class Simulation {
 	}
 	
 	/***
+	 * Construct object set based on the indicated known objects file.
+	 * 
+	 * @param fileName the name of the known objects file
+	 * @return object set based on the indicated known objects file
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
+	public static Set<String> getObjectsFromFile(String fileName) throws URISyntaxException, IOException {
+    	Set<String> objects = new HashSet<String>();
+    	
+        List<String> lines = Simulation.getLines(fileName);	
+    	
+    	for (String line : lines) {
+    		objects.add(line.trim());
+    	}
+    	return objects;
+	}
+	
+	/***
 	 * Construct answer database based on the indicated Tricopa answers file.
 	 * 
 	 * @param fileName the name of the Tricopa answers file
@@ -126,7 +150,7 @@ public class Simulation {
     		}
     	}
     	return answers;
-	}
+	}	
 	
 	/***
 	 * Construct ActionKnowledge database  based on the indicated knowledge file.
@@ -157,13 +181,13 @@ public class Simulation {
 				if (args.length >1) { //there is more information to read
 					for (char c : args[1].toCharArray()) {
 						switch(c) {
-							case '=':
+							case 'F':
 								expectationsGivenRelationshipType.put(RelationshipType.FRIEND, true);
 								break;
-							case '-':
+							case 'E':
 								expectationsGivenRelationshipType.put(RelationshipType.ENEMY, true);
 								break;
-							case '0':
+							case 'N':
 								expectationsGivenRelationshipType.put(RelationshipType.NEUTRAL, true);
 								break;
 						}//done with char
@@ -188,8 +212,18 @@ public class Simulation {
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
-	private static List<String> getLines(String fileName) throws URISyntaxException, IOException {
-		URI uri = Simulation.class.getResource(fileName).toURI();
+	private static List<String> getLines(String fileName) throws URISyntaxException, IOException {				
+		String s = fileName;
+		URL url = Simulation.class.getResource(s);
+//		System.out.println(url); //for debug
+		
+		if (url == null) {
+			throw new FileNotFoundException();
+		}
+		
+		URI uri = Simulation.class.getResource(s).toURI();
+//		System.out.println(uri); //for debug
+		
 		return Files.readAllLines(Paths.get(uri), Charset.defaultCharset());
 	}
 	
@@ -345,23 +379,27 @@ public class Simulation {
 		for (Map.Entry<Integer, TricopaTask> numberedTricopaTask : tricopaTasks.entrySet()) {
 			int taskNumber = numberedTricopaTask.getKey();			
 			TricopaTask tricopaTask = numberedTricopaTask.getValue();
-			if (verbose) {System.out.println("\nTASK " + taskNumber);}
-			
+			if (verbose) {
+				System.out.println("****************************************************************");
+				System.out.println("\nTASK " + taskNumber);
+			}
 			
 			try {
 				int chosen = socialAgent.doTricopaTask(tricopaTask);
 				
 				if ( chosen == answers.get(taskNumber) ) {
 					performanceOnTasks.put(taskNumber, TricopaTaskPerformance.CORRECT);
-					if (verbose) {System.out.println("CORRECT " + "\n(The correct choice was " + answers.get(taskNumber) + ")");}
+					if (verbose) {System.out.println("CORRECT");}
 				} else {
 					performanceOnTasks.put(taskNumber, TricopaTaskPerformance.INCORRECT);
-					if (verbose) {System.out.println("INCORRECT " + "\n(The correct choice was " + answers.get(taskNumber) + ")");}
+					if (verbose) {System.out.println("INCORRECT");}
 				}
 			} catch (UndecidedAgentException e) {
 				performanceOnTasks.put(taskNumber, TricopaTaskPerformance.INCOMPLETE);
-				if (verbose) {System.out.println("INCOMPLETE " + "\n(The correct choice was " + answers.get(taskNumber) + ")");}
+				if (verbose) {System.out.println("INCOMPLETE (THE CORRECT ANSWER WAS " + answers.get(taskNumber) + ")");}
 			}
+			System.out.println();
+
 		}//done with all tasks
 		return performanceOnTasks;
 	}
@@ -437,37 +475,37 @@ public class Simulation {
 	/////////////////////////////////////////////////////////////////
 	/// FOR REPORTING AGENT INTERPRETATION OF A SINGLE SCENARIO /////
 	/////////////////////////////////////////////////////////////////	
-	/***
-	 * 
-	 * @param relationshipBeliefsOverTime
-	 * @return
-	 */
-	public static String getTableRepresentationOfRelationshipBeliefsOverTime(Pair<String> relationship, Map<Integer, Map<RelationshipType, Double>> relationshipBeliefsOverTime) {
-		try {
-			String sheet = "\nRelationship between " + relationship + "\n";
-			int minTime = Collections.min(relationshipBeliefsOverTime.keySet());
-			int maxTime = Collections.max(relationshipBeliefsOverTime.keySet());
-			sheet += "time\tBelief that the relationship is...\n";
-			sheet += "\tFriend\t\tNeutral\t\tEnemy\n";
-			for (int currTime = minTime; currTime<=maxTime; currTime++) {
-				if (relationshipBeliefsOverTime.containsKey(currTime)) {
-					sheet += currTime + "\t";
-					Map<RelationshipType, Double> currBelief = relationshipBeliefsOverTime.get(currTime);
-					for (RelationshipType relationshipType : RelationshipType.values()) {
-						NumberFormat format = NumberFormat.getPercentInstance();
-						format.setMinimumFractionDigits(2);
-						sheet +=  format.format(currBelief.get(relationshipType)) + "\t\t";
-					}//done with all relationship types
-					sheet += "\n";
-				}
-			}
-			return sheet;
-		} catch (NullPointerException e) {
-			System.err.println(e.getClass() + ": " + e.getMessage());
-		}
-		return null;//failed
-	}
-	
+//	/***
+//	 * 
+//	 * @param relationshipBeliefsOverTime
+//	 * @return
+//	 */
+//	public static String getTableRepresentationOfRelationshipBeliefsOverTime(Pair<String> relationship, Map<Integer, Map<RelationshipType, Double>> relationshipBeliefsOverTime) {
+//		try {
+//			String sheet = "";
+//			int minTime = Collections.min(relationshipBeliefsOverTime.keySet());
+//			int maxTime = Collections.max(relationshipBeliefsOverTime.keySet());
+//			sheet += "Time\tBelief that the relationship " + relationship + " is\n";
+//			sheet += "\tFriend\tNeutral\tEnemy\n";
+//			sheet += "-----------------------------\n";
+//			for (int currTime = minTime; currTime<=maxTime; currTime++) {
+//				if (relationshipBeliefsOverTime.containsKey(currTime)) {
+//					sheet += currTime + "\t";
+//					Map<RelationshipType, Double> currBelief = relationshipBeliefsOverTime.get(currTime);
+//					for (Map.Entry<RelationshipType,Double> entry : currBelief.entrySet()) {
+//						NumberFormat format = NumberFormat.getPercentInstance();
+//						format.setMinimumIntegerDigits(2);
+//						sheet +=  format.format(entry.getValue()) + "\t";
+//					}//done with all relationship types
+//					sheet += "\n";
+//				}
+//			}
+//			return sheet;
+//		} catch (NullPointerException e) {
+//			System.err.println(e.getClass() + ": " + e.getMessage());
+//		}
+//		return null;//failed
+//	}	
 	
 
 	/***
@@ -479,24 +517,27 @@ public class Simulation {
 	 * @author pkalluri
 	 */
 	public static void main(String[] args) throws Exception {
+		
+
 		/***
-		 * Parameters
+		 * Default arameters
 		 */		
 		boolean VERBOSE_FILE_READING = false;
-		boolean VERBOSE_AGENT = true;
+		boolean VERBOSE_AGENT = false;
 
-		boolean ADMINISTER_SINGLE_SCENARIO = true;
+		boolean ADMINISTER_SINGLE_SCENARIO = false;
 		//Used iff ADMINISTER_SINGLE_SCENARIO parameter is set to true:
-		String SCENARIO_FILENAME = "/Scenario.txt"; 
-		String SCENARIO_KNOWLEDGE_FILENAME = "/Knowledge.txt";
-		Set<String> OBJECTS_IN_SCENARIO = new HashSet<String>();
-		Pair<String> RELATIONSHIP_TO_REPORT_ON = new Pair<String>("C","BT");
+		String SCENARIO_FILENAME = ""; 
+		String SCENARIO_KNOWLEDGE_FILENAME = "";
+		String SCENARIO_NONAGENTS_FILENAME = "";
+		boolean QUERY_SPECIFIC_RELATIONSHIP = false;
+		Pair<String> QUERIED_RELATIONSHIP = null;
 		
-		boolean ADMINISTER_TRICOPA_TASKS = true;
+		boolean ADMINISTER_TRICOPA_TASKS = false;
 		//Used iff ADMINISTER_TRICOPA_TASKS parameter is set to true:
 		String TRICOPA_TASKS_FILENAME = "/Tricopa_Tasks.txt";
 		String TRICOPA_KNOWLEDGE_FILENAME = "/Knowledge.txt";
-		Set<String> OBJECTS_IN_TRICOPA_TASKS = new HashSet<String>(Arrays.asList("CORNER","D", "OUTSIDE", "INSIDE", "x", "BEHINDBOX"));
+		String TRICOPA_NONAGENTS_FILENAME = "/Tricopa-Nonagents.txt";
 		String TRICOPA_ANSWERS_FILENAME = "/Tricopa_Answers.txt";
 		Set<Integer> TASK_NUMS_TO_DO = Simulation.GetRange(1, 101); //Which task numbers to do
 		
@@ -506,39 +547,88 @@ public class Simulation {
 		//TASKS_TO_REMOVE.addAll(Arrays.asList(4)); //ASYMMETRIC TASKS
 		TASK_NUMS_TO_REMOVE.addAll(Arrays.asList(47,50,56,74,76,77,80,84,86,92,94,99)); //TASKS WITH 'NOT' LITERAL		
 			
+		/***
+		 * Setting params from main args
+		 */
+		switch (args[0]) {
+		case "s":
+			ADMINISTER_SINGLE_SCENARIO = true;
+			ADMINISTER_TRICOPA_TASKS = false;
+			
+			switch (args[1]) {
+			case "y":
+				VERBOSE_AGENT =  true;
+				break;
+			case "n":
+				VERBOSE_AGENT =  false;
+				break;
+			default:
+				throw new IllegalArgumentException();
+			}
+			SCENARIO_FILENAME = args[2]; 
+			SCENARIO_KNOWLEDGE_FILENAME = args[3];
+			SCENARIO_NONAGENTS_FILENAME = args[4];
+			if (args.length==7) {
+				QUERY_SPECIFIC_RELATIONSHIP = true;
+				QUERIED_RELATIONSHIP = new Pair<String>(args[5],args[6]);
+			}
+			break;
+		case "t":
+			ADMINISTER_SINGLE_SCENARIO = false;
+			ADMINISTER_TRICOPA_TASKS = true;
+			
+			switch (args[1]) {
+			case "y":
+				VERBOSE_AGENT =  true;
+				break;
+			case "n":
+				VERBOSE_AGENT =  false;
+				break;
+			default:
+				throw new IllegalArgumentException();
+			}
+			TRICOPA_TASKS_FILENAME = args[2];
+			TRICOPA_KNOWLEDGE_FILENAME = args[3];
+			TRICOPA_NONAGENTS_FILENAME = args[4];
+			TRICOPA_ANSWERS_FILENAME = args[5];
+			break;
+		default:
+			throw new IllegalArgumentException();
+		}
+		
 		
 		/***
 		 * Administer single story.
 		 */
 		if (ADMINISTER_SINGLE_SCENARIO) {
-			System.out.println("...ADMINISTERING A SCENARIO...");
-
 			/***
 			 * Spawn a social agent with knowledge from knowledge file
 			 */
 			Map<String, ActionKnowledge> actionKnowledgebase = Simulation.getActionKnowledgebase(SCENARIO_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
-			AffinitybasedAgent affinitybasedAgent = new AffinitybasedAgent(actionKnowledgebase, OBJECTS_IN_SCENARIO, VERBOSE_AGENT);
+			Set<String> knownObjectsSet = Simulation.getObjectsFromFile(SCENARIO_NONAGENTS_FILENAME);
+			AffinitybasedAgent affinitybasedAgent = new AffinitybasedAgent(actionKnowledgebase, knownObjectsSet, VERBOSE_AGENT);
 
 			/***
 			 * Administer story to social agent
 			 * Social agent reads the story and in real-time updates interpreted relationship information
 			 */
 			Scenario story = Simulation.getScenarioFromFile(SCENARIO_FILENAME);
-			Map<Pair<String>, Map<Integer,Map<RelationshipType,Double>>> allRelationshipInfo = 
-					affinitybasedAgent.getWorldModelOf(story, false).getHistory();
+			affinitybasedAgent.read(story, false);
 			
 			/***
 			 * Print table of relationship beliefs over time regarding the indicated relationship
 			 */
-			System.out.println(Simulation.getTableRepresentationOfRelationshipBeliefsOverTime(RELATIONSHIP_TO_REPORT_ON, allRelationshipInfo.get(RELATIONSHIP_TO_REPORT_ON)));
+			if (QUERY_SPECIFIC_RELATIONSHIP) {
+				affinitybasedAgent.stateBelief(QUERIED_RELATIONSHIP);				
+			}
 		} // done administering story
 		if (ADMINISTER_TRICOPA_TASKS) {		
-			System.out.println("...ADMINISTERING TRICOPA TASKS...");
 			/***
 			 * Spawn a social agent with knowledge from knowledge file
 			 */
 			Map<String, ActionKnowledge> actionKnowledgebase = Simulation.getActionKnowledgebase(TRICOPA_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
-			TricopaParticipant socialAgent = new AffinitybasedAgent(actionKnowledgebase, OBJECTS_IN_TRICOPA_TASKS, VERBOSE_AGENT);
+			Set<String> knownObjectsSet = Simulation.getObjectsFromFile(TRICOPA_NONAGENTS_FILENAME);
+			TricopaParticipant socialAgent = new AffinitybasedAgent(actionKnowledgebase, knownObjectsSet, VERBOSE_AGENT);
 			
 			/***
 			 * Set up, before administering tasks to social agent

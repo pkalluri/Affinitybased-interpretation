@@ -1,3 +1,4 @@
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,21 +44,25 @@ public class AffinitybasedWorldModel implements WorldModel{
 		this.agents = new ArrayList<String> ();
 		this.affinityBeliefs = new HashMap<Pair<String>, SymmetricRelationshipModel> ();
 		this.affinityBeliefHistory = new HashMap<Pair<String>, Map<Integer,Map<RelationshipType,Double>>>();
-		this.age = 0;
+		this.age = 1;
 	}
 	
 	//////////////////////////////////////////
 	/////// OVERRIDE INTERFACE METHODS ///////
 	//////////////////////////////////////////
-
+	@Override
+	public int getAge() {
+		return this.age;
+	}
+	
 	@Override
 	public void update(ActionEvent actionEvent, ActionKnowledge actionKnowledge) {		
 		/***
 		 * Add all implied pairs to the world model
 		 */
 		if (  !agents.contains(actionEvent.actor)  ) {
-			for (String character : agents) {
-				affinityBeliefs.put(new Pair<String>(character,actionEvent.actor)  , new SymmetricRelationshipModel(RelationshipType.values()));
+			for (String agent : agents) {
+				affinityBeliefs.put(new Pair<String>(agent,actionEvent.actor)  , new SymmetricRelationshipModel(RelationshipType.values()));
 			}//done adding pairs
 			agents.add(actionEvent.actor);
 		}
@@ -165,6 +170,22 @@ public class AffinitybasedWorldModel implements WorldModel{
 		return this.affinityBeliefs.toString();
 	}
 	
+	public String toShortString() {
+		String toPrint = "";
+		int MAX_NUMBER_OF_ENTRIES_PER_LINE = 5;
+		
+		int numberOfEntries = 0;
+		for (Map.Entry<Pair<String>, SymmetricRelationshipModel> entry : this.affinityBeliefs.entrySet()) {
+			toPrint += entry.getKey() + ":" + entry.getValue().toShortString() + ", ";
+			numberOfEntries ++;
+			if (numberOfEntries % MAX_NUMBER_OF_ENTRIES_PER_LINE == 0) {
+				toPrint += "\n";
+			}
+		}		
+		if (toPrint == "") {return toPrint;}
+		else { return toPrint.substring(0,toPrint.length()-2);}
+	}
+	
 	//////////////////////////////////////////
 	/////// ADDED METHODS ////////////////////
 	//////////////////////////////////////////
@@ -175,5 +196,14 @@ public class AffinitybasedWorldModel implements WorldModel{
 	 */
 	public Map<Pair<String>, Map<Integer, Map<RelationshipType, Double>>> getHistory() {
 		return affinityBeliefHistory;
+	}
+	
+	/***
+	 * Get the beliefs about the given relationship as a map from RelationshipType to believed probability of that RelationshipType.
+	 * @param relationship
+	 * @return
+	 */
+	public Map<RelationshipType, Double> getBeliefs(Pair<String> relationship) {
+		return this.affinityBeliefs.get(relationship).getCopyOfBeliefs();
 	}
 }

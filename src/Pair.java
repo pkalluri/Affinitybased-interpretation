@@ -23,6 +23,14 @@ public class Pair<E>{
 	}
 	
 	/***
+	 * Return a set containing the elements in this pair.
+	 * @return a set containing the elements in this pair
+	 */
+	public Set<E> getElements() {
+		return this.pair;
+	}
+	
+	/***
 	 * Test this Pair for equality with another Object.
 	 * 
 	 * @param other the other Object
@@ -70,12 +78,19 @@ public class Pair<E>{
 	 */
 	@Override
 	public String toString() {
-		String str = "( ";
+//		String str = "(";
+//		for (E elt : pair) {
+//			str += elt;
+//			str += ",";
+//		}
+//		return str.substring(0, str.length()-1)+")";
+		String str = "";
 		for (E elt : pair) {
 			str += elt;
-			str += " ";
+			str += "&";
 		}
-		return str+")";
+		return str.substring(0, str.length()-1);
+		
 	}
 
 }

@@ -1,0 +1,34 @@
+isWife F
+isKing
+isSuccessor
+isEnemy E
+defeats E
+becomesHappy F
+areWeird
+meet
+dance F
+talks
+predict
+executes E
+rewards F
+asksForMorePower F
+persuades F
+loves F
+wantsToPlease F
+plotsToMurder E
+plotsToMurder E
+invitesToDinner F
+compliments F
+goesToBed
+murders E
+murders E
+flees E
+murders E
+hallucinates
+becomesDistraught E
+hasBadDreams E
+commitesSuicide E
+attacks E
+curses E
+refusesToSurrender E
+kills E

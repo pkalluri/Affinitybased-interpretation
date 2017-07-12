@@ -1,0 +1,4 @@
+DOOR
+D
+CORNER
+x

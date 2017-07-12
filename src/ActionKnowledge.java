@@ -1,4 +1,5 @@
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Map;
 
 /***
@@ -63,11 +64,25 @@ public class ActionKnowledge {
 	@Override
 	public String toString() {
 		assert isValid();
-		String toPrint = "----[action knowledge:";
+		String toPrint = "{ ";
 		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
 			toPrint += entry.getKey().toString().charAt(0) + "=" + new DecimalFormat("##.##").format(entry.getValue()) + "/";
 		}
-		return toPrint.substring(0, toPrint.length()-1) + "]---->";
+		toPrint = toPrint.substring(0, toPrint.length()-1) + "}";
+		
+		return this.relativeObservationDistribution.toString();
+	}
+	
+	public String toShortString() {
+		assert isValid();
+		String toPrint = "";
+		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
+//			toPrint += new DecimalFormat("##.##").format(entry.getValue()) + "/";
+			NumberFormat format = NumberFormat.getPercentInstance();
+			format.setMinimumIntegerDigits(2);
+			toPrint += format.format(entry.getValue()) + "|";
+		}		
+		return toPrint.substring(0,toPrint.length()-1);
 	}
 		
 	//////////////////////////////////////////

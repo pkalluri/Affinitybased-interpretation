@@ -1,4 +1,5 @@
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,6 +111,16 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 		}
 		return toPrint + "}";
 		
+	}
+	
+	public String toShortString() {
+		assert isValid();
+		String toPrint = "";
+		for (Map.Entry<RelationshipType, Double> entry : this.beliefs.entrySet()) {
+			NumberFormat format = NumberFormat.getPercentInstance();
+			format.setMinimumIntegerDigits(2);
+			toPrint += format.format(entry.getValue()) + "|";		}		
+		return toPrint.substring(0,toPrint.length()-1);
 	}
 
 	//////////////////////////////////////////

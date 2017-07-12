@@ -4,6 +4,12 @@
  *
  */
 public interface WorldModel {
+	
+	/***
+	 * Get age of world
+	 * @return age of world
+	 */
+	public int getAge();
 
 	/***
 	 * Update world model with the given actionEvent, assuming the given actionKnowledge.

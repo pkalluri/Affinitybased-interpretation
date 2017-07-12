@@ -1,5 +1,6 @@
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,12 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	/***
 	 * The agent's memory of recently observed agents.
 	 */
-	private RecentlyObservedAgentsMemory memory;
+	private RecentlyObservedAgentsMemory rememberedAgents;
+	
+	/***
+	 * The agent's memory of the most recently built AffinitybasedWorldModel.
+	 */
+	private AffinitybasedWorldModel  rememberedWorldModel;
 	
 	private final boolean verbose;
 	
@@ -46,7 +52,8 @@ public class AffinitybasedAgent implements TricopaParticipant {
 		this.actionKnowledgebase = actionKnowledgebase;
 		this.knownObjects = knownObjects;
 		
-		this.memory = new RecentlyObservedAgentsMemory();
+		this.rememberedAgents = new RecentlyObservedAgentsMemory();
+		this.rememberedWorldModel = null;
 		
 		this.verbose = verbose;
 	}
@@ -56,6 +63,16 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	////////////////////////////////////////////////////////////
 
 	/***
+	 * Reads the given scenario, given the scenario may or may not be a followupScenario.
+	 * @param scenario
+	 * @param followupScenario
+	 * @throws InsufficientKnowledgeException
+	 */
+	public void read(Scenario scenario, boolean followupScenario) throws InsufficientKnowledgeException {
+		this.getWorldModelOf(scenario, followupScenario);
+	}
+	
+	/***
 	 * Build a world model of the given scenario, given the scenario may or may not be a followupScenario.
 	 * If the scenario is a followupScenario, then memory flows continuously from the last interpreted scenario 
 	 * into the interpretation of this scenario.
@@ -64,37 +81,95 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @return the world model of the given scenario 
 	 * @throws InsufficientKnowledgeException there was insufficient knowledge to get a world model of the scenario
 	 */
-	public AffinitybasedWorldModel getWorldModelOf(Scenario scenario, boolean followupScenario) throws InsufficientKnowledgeException {
+	private AffinitybasedWorldModel getWorldModelOf(Scenario scenario, boolean followupScenario) throws InsufficientKnowledgeException {
 		AffinitybasedWorldModel worldModel = new AffinitybasedWorldModel();
 		if (!followupScenario) {
-			memory.reset();
+			rememberedAgents.reset();
+		}
+		if (verbose) {
+			System.out.format("%-24s %-24s %s %n", "", "(Friend|Neutral|Enemy)", "(Friend|Neutral|Enemy)");
+
+			System.out.format("%-24s %-24s %s %n", "Event", "Action R.O.D.", "Beliefs about relationships");
+
+			System.out.println("----------------------------------------------------------------");
 		}
 		for (ActionEvent actionEvent : scenario.actionEvents ) {
+			//check for knowledge
+			if (	!actionKnowledgebase.containsKey(actionEvent.action)	) { 
+				throw new InsufficientKnowledgeException (actionEvent.action);
+			}
+			ActionKnowledge actionKnowledge = actionKnowledgebase.get(actionEvent.action);
 			try {
 				ActionEvent fullActionEvent = this.getFullActionEvent(actionEvent); //get action event with 2 agents, by assuming implicit response
-				if (verbose) {System.out.print("\"" + fullActionEvent + "\" --> ");}
-
-				//check for knowledge
-				if (	!actionKnowledgebase.containsKey(fullActionEvent.action)	) { 
-					throw new InsufficientKnowledgeException (fullActionEvent.action);
-				}
-			
-				//update based on the valid unit
-				ActionKnowledge actionKnolwedge = actionKnowledgebase.get(actionEvent.action);
-//				if (verbose) {System.out.print(actionKnolwedge + " ");}
-				worldModel.update(fullActionEvent, actionKnolwedge);
-				if (verbose) {System.out.println(worldModel);}
 				
+				worldModel.update(fullActionEvent, actionKnowledge);
 				this.updateMemory(fullActionEvent); //update memory based on this unit
 			} catch (UnableToFillActionEventException e) {
-				if (verbose) {System.out.println("Could not process this event.");}
 				this.updateMemory(actionEvent); //still update memory
 			}
+			
+			if (verbose) {
+				String worldModelString = worldModel.toShortString().replaceAll("(?m)^", "\t\t\t\t\t");
+				if (worldModelString != "") {worldModelString = worldModelString.substring(5);}
+				System.out.format("%-24s %-24s %s %n", actionEvent, actionKnowledge.toShortString(), worldModelString);				
+			}
+			
 		}//done with events
 		worldModel.reflectOnAndRefineBeliefs();
-		if (verbose) {System.out.println(" Reflecting --> " + worldModel);}
+		if (verbose) {
+			String worldModelString = worldModel.toShortString().replaceAll("(?m)^", "\t\t\t\t\t");
+			if (worldModelString != "") {worldModelString = worldModelString.substring(5);}
+			System.out.format("%-24s %-24s %s %n", "Reflecting", "", worldModelString);				
+		}
+		if(verbose) {System.out.println();}
+		this.rememberedWorldModel = worldModel;
 		return worldModel;
 	}
+	////////////////////////////////////////////////////////////
+	//////// QUERYING RECENT WORLD MODEL ///////////////////////
+	////////////////////////////////////////////////////////////
+	/***
+	 * State the belief regarding the given relationship given the most recently observed WorldModel.
+	 * @param relationship
+	 */
+	public void stateBelief(Pair<String> relationship) {
+		Map<RelationshipType,Double> beliefs = this.rememberedWorldModel.getBeliefs(relationship);
+		
+		double highestProbability = 0;
+		Set<RelationshipType> likelyRelationshipTypes = null;
+		for (Map.Entry<RelationshipType, Double> belief : beliefs.entrySet()) {
+			double currProbability = belief.getValue();
+			if (currProbability > highestProbability) {
+				highestProbability = currProbability;
+				likelyRelationshipTypes = new HashSet<RelationshipType>();
+				likelyRelationshipTypes.add(belief.getKey());
+			} else if (currProbability == highestProbability) {
+				likelyRelationshipTypes.add(belief.getKey());
+			}
+		}
+		
+		
+		String str = "I believe that the relationship between " + relationship + " is a ";
+		for (RelationshipType likelyRelationshipType : likelyRelationshipTypes) {
+			str += likelyRelationshipType.toString().toLowerCase() + " or ";
+		}
+		str = str.substring(0,str.length()-4) + " relationship with ";
+		NumberFormat format = NumberFormat.getPercentInstance();
+		format.setMinimumIntegerDigits(2);
+		str += format.format(highestProbability) + " confidence.";
+		
+		System.out.println(str);
+	}
+//	
+//	/***
+//	 * Helper: gets a string representation of the relationship 
+//	 * @param p
+//	 * @return
+//	 */
+//	private String relationshipString(Pair relationship) {
+//		relationship.getElements().
+//		return 
+//	}
 	
 
 	////////////////////////////////////////////////////////////
@@ -112,7 +187,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	private int choiceOfPlausibleAlternatives(Scenario premise, List<Scenario> possibleChoices) 
 					throws InsufficientKnowledgeException, UndecidedAgentException {
 		AffinitybasedWorldModel worldModel = getWorldModelOf(premise, false);
-		RecentlyObservedAgentsMemory preChoosingMemory = memory.clone();
+		RecentlyObservedAgentsMemory preChoosingMemory = rememberedAgents.clone();
 		
 		//Consider choices
 		int longestDescriptionLength = getMaxDescriptionLength(possibleChoices);
@@ -126,63 +201,74 @@ public class AffinitybasedAgent implements TricopaParticipant {
 
 			choiceNumber ++;
 			
-			if (verbose) {System.out.println("___Reading choice___");}
+//			if (this.verbose) {System.out.println("...agent is reading a possible interpretation...");}
 			double probabilityOfThisChoice = 1;
 			double sumOfEventProbs = 0; // the sum of the probabilities of all events 
 			int numTimesUpdated = 0;
 			
-			memory.setRecentlyObservedAgents(preChoosingMemory.getSecondToLastObservedAgent(), preChoosingMemory.getLastObservedAgent());
+			rememberedAgents.setRecentlyObservedAgents(preChoosingMemory.getSecondToLastObservedAgent(), preChoosingMemory.getLastObservedAgent());
+			if (verbose) {
+				System.out.format("%-24s %-24s %s %n", "Possible event", "Action R.O.D.","p");
+				System.out.println("----------------------------------------------------------------");
+			}
 			for (ActionEvent actionEvent : choice.actionEvents ) {
-
-				try {
-					ActionEvent fullActionEvent = this.getFullActionEvent(actionEvent); //get valid unit
-
-					if (verbose) {System.out.print("\"" + fullActionEvent + "\" --> ");}
-	
-	
-					//check for knowledge
-					if (	!actionKnowledgebase.containsKey(fullActionEvent.action)	) { 
-						throw new InsufficientKnowledgeException (fullActionEvent.action);
-					}
+				//check for knowledge
+				if (	!actionKnowledgebase.containsKey(actionEvent.action)	) { 
+					throw new InsufficientKnowledgeException (actionEvent.action);
+				}
+				ActionKnowledge actionKnowledge = actionKnowledgebase.get(actionEvent.action);
 				
-					//how likely is the event
-					ActionKnowledge actionKnowledge = actionKnowledgebase.get(actionEvent.action);
-//					if(verbose) {System.out.print(actionKnowledge + " ");}
+				try {
+					ActionEvent fullActionEvent = this.getFullActionEvent(actionEvent); //get valid unit	
+
 					double probabilityOfThisEvent = worldModel.probabilityOf(fullActionEvent,actionKnowledge );
 					sumOfEventProbs += probabilityOfThisEvent;
 					probabilityOfThisChoice *= probabilityOfThisEvent;
-					if(verbose) {
+					
+					if (verbose) {
 						NumberFormat format = NumberFormat.getPercentInstance();
-						format.setMinimumFractionDigits(2);
-						System.out.println("" + format.format(probabilityOfThisEvent));
-					}
+						format.setMinimumIntegerDigits(2);
+						System.out.format("%-24s %-24s %s %n", actionEvent, actionKnowledge.toShortString(),format.format(probabilityOfThisEvent), "") ;
+					}				
+
 					numTimesUpdated ++;
 					this.updateMemory(fullActionEvent); //update memory based on this unit
 				} catch (UnableToFillActionEventException e) {
+					if (verbose) {
+						NumberFormat format = NumberFormat.getPercentInstance();
+						format.setMinimumIntegerDigits(2);
+						System.out.format("%-24s %-24s %s %n", actionEvent, actionKnowledge.toShortString(), "N/A") ;
+					}		
 					this.updateMemory(actionEvent); //update memory based on original unit
 				}
 			}//done with units
 			
 			double eventProbForNormalizing = sumOfEventProbs/(double)numTimesUpdated;
 			for (int i = numTimesUpdated; i < longestDescriptionLength; i++) {
-				if(verbose) {
+				if (verbose) {
 					NumberFormat format = NumberFormat.getPercentInstance();
-					format.setMinimumFractionDigits(2);
-					System.out.println("(Normalizing) " + format.format(eventProbForNormalizing));
-				}
+					format.setMinimumIntegerDigits(2);
+					System.out.format("%-24s %-24s %s %n", "Normalizing", "", format.format(eventProbForNormalizing), "") ;
+				}		
 				probabilityOfThisChoice *= eventProbForNormalizing;
 			}//done normalizing
 			
 			if (numTimesUpdated == 0) {
 				probabilityOfThisChoice = -1; //do not consider complete disjoint
-				if(verbose) {System.out.println("Choice not considered; Assigned probability of " + probabilityOfThisChoice);}
+//				if(verbose) {System.out.println("Choice not considered; Assigned probability of " + probabilityOfThisChoice);}
 			}
-			NumberFormat format = NumberFormat.getPercentInstance();
-			format.setMinimumFractionDigits(2);
-			if (verbose) {System.out.println(" P=" + format.format(probabilityOfThisChoice));}
+			
+			if (verbose) {
+				NumberFormat format = NumberFormat.getPercentInstance();
+				format.setMinimumIntegerDigits(2);
+				System.out.format("%-24s %-24s %s %n", "", "", "P=" + format.format(probabilityOfThisChoice), "") ;
+				System.out.println();
+//				System.out.println("Probability of this choice: " + format.format(probabilityOfThisChoice));
+			}
 			
 			//update best choice
 			if (probabilityOfThisChoice == probabilityOfBestChoice) {
+				System.out.println("The agent says: \"I can't make a decision.\"");
 				throw new UndecidedAgentException();
 			} else if (probabilityOfThisChoice > probabilityOfBestChoice) {
 				probabilityOfBestChoice = probabilityOfThisChoice;
@@ -190,13 +276,16 @@ public class AffinitybasedAgent implements TricopaParticipant {
 			}
 		}//done with choice
 
+		if (verbose) {
+			System.out.println("I choose interpretation " + bestChoiceNumber + ".");
+		}
 		return bestChoiceNumber;
 
 	}
 
 	@Override
 	public int doTricopaTask(TricopaTask tricopaTask) throws InsufficientKnowledgeException, UndecidedAgentException {
-		if (this.verbose) {System.out.println("___Reading premise___");}
+//		if (this.verbose) {System.out.println("...agent is reading premise...");}
 		int choice = this.choiceOfPlausibleAlternatives(tricopaTask.premise, tricopaTask.possibleChoices);
 //		if (verbose) {System.out.println("Agent chose: " + choice);}
 		return choice;
@@ -215,13 +304,13 @@ public class AffinitybasedAgent implements TricopaParticipant {
 		 * Update memory based on actedUpon agent.
 		 */
 		if (this.isAgent(actionEvent.actedUpon)	) {
-			memory.update(actionEvent.actedUpon, this.verbose);
+			rememberedAgents.update(actionEvent.actedUpon, this.verbose);
 		}
 		/***
 		 * Then, update memory based on actor agent, in order to give actor agent recency/salience in immediate memory.
 		 */
 		if (this.isAgent(actionEvent.actor)	) {
-			memory.update(actionEvent.actor, this.verbose);
+			rememberedAgents.update(actionEvent.actor, this.verbose);
 		}
 	}
 
@@ -279,10 +368,10 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	private ActionEvent replaceActor(ActionEvent actionEvent) throws UnableToFillActionEventException {
 		ActionEvent modifiedActionEvent = null;		
 	
-		if (isAgent(memory.getLastObservedAgent()) && !actionEvent.actedUpon.equals(memory.getLastObservedAgent())) { //if different
-			modifiedActionEvent = new ActionEvent(memory.getLastObservedAgent(),actionEvent.action,actionEvent.actedUpon);					
-		} else if (isAgent(memory.getSecondToLastObservedAgent()) && !actionEvent.actedUpon.equals(memory.getSecondToLastObservedAgent())) { //if different
-			modifiedActionEvent = new ActionEvent(memory.getSecondToLastObservedAgent(),actionEvent.action,actionEvent.actedUpon);					
+		if (isAgent(rememberedAgents.getLastObservedAgent()) && !actionEvent.actedUpon.equals(rememberedAgents.getLastObservedAgent())) { //if different
+			modifiedActionEvent = new ActionEvent(rememberedAgents.getLastObservedAgent(),actionEvent.action,actionEvent.actedUpon);					
+		} else if (isAgent(rememberedAgents.getSecondToLastObservedAgent()) && !actionEvent.actedUpon.equals(rememberedAgents.getSecondToLastObservedAgent())) { //if different
+			modifiedActionEvent = new ActionEvent(rememberedAgents.getSecondToLastObservedAgent(),actionEvent.action,actionEvent.actedUpon);					
 		}
 		
 		if (modifiedActionEvent == null) { throw new UnableToFillActionEventException();}
@@ -302,11 +391,11 @@ public class AffinitybasedAgent implements TricopaParticipant {
 		ActionEvent modifiedActionEvent = null;
 		String replacement_character;
 
-		if (isAgent(memory.getLastObservedAgent()) && !descriptionUnit.actor.equals(memory.getLastObservedAgent())) { //if different
-			replacement_character = memory.getLastObservedAgent(); //use last
+		if (isAgent(rememberedAgents.getLastObservedAgent()) && !descriptionUnit.actor.equals(rememberedAgents.getLastObservedAgent())) { //if different
+			replacement_character = rememberedAgents.getLastObservedAgent(); //use last
 			modifiedActionEvent = new ActionEvent(descriptionUnit.actor,descriptionUnit.action,replacement_character);					
-		} else if (isAgent(memory.getSecondToLastObservedAgent()) && !descriptionUnit.actor.equals(memory.getSecondToLastObservedAgent())) { //if different
-			replacement_character = memory.getSecondToLastObservedAgent(); //use second to last
+		} else if (isAgent(rememberedAgents.getSecondToLastObservedAgent()) && !descriptionUnit.actor.equals(rememberedAgents.getSecondToLastObservedAgent())) { //if different
+			replacement_character = rememberedAgents.getSecondToLastObservedAgent(); //use second to last
 			modifiedActionEvent = new ActionEvent(descriptionUnit.actor,descriptionUnit.action,replacement_character);					
 		}
 
