@@ -97,7 +97,7 @@ Run ```Simulation``` with arguments
 
 ```verbose``` - ```y``` (or ```n```) to indicate that the agent should (or should not) be verbose
 
-```ticopa-tasks-file-path``` - the relative path of a **Tricopa Tasks File** containing TriangleCOPA challenge problems in logical literal form
+```tricopa-tasks-file-path``` - the relative path of a **Tricopa Tasks File** containing TriangleCOPA challenge problems in logical literal form
 
 ```knowledge-file-path``` - as above
 
