@@ -16,7 +16,7 @@ public interface WorldModel {
 	 * @param actionEvent the ActionEvent occurring in this world
 	 * @param actionKnowledge the ActionKnowledge about the action being completed
 	 */
-	public void update(ActionEvent actionEvent, ActionKnowledge actionKnowledge);
+	public void update(ActionEvent actionEvent, ActionROD actionKnowledge);
 	
 	/***
 	 * Reflect on beliefs and update beliefs based on this reflection.
@@ -36,6 +36,6 @@ public interface WorldModel {
 	 * @param actionKnowledge the ActionKnowledge about the action being completed
 	 * @return the probability of the given actionEvent, assuming the given actionKnowledge
 	 */
-	public double probabilityOf(ActionEvent validDescriptionUnit, ActionKnowledge actionKnowledge) throws Exception;
+	public double probabilityOf(ActionEvent validDescriptionUnit, ActionROD actionKnowledge) throws Exception;
 
 }

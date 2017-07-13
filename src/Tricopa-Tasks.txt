@@ -699,6 +699,3 @@ a. The triangle hesitates to open the door because it is unsure if it wants to l
 b. The triangle hesitates to open the door because it is excited to see the circle.
 (excited' e7 LT)
 
-101.
-
-

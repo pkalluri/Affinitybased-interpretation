@@ -15,6 +15,6 @@ public class InsufficientKnowledgeException extends Exception{
 	 * @param action
 	 */
 	public InsufficientKnowledgeException(String action) {
-		super("Insufficient knowledge about: " + action);
+		super("Insufficient knowledge about \"" + action + "\" to continue.");
 	}
 }

@@ -2,7 +2,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /***
- * A Pair contains two unordered elements of the same type. A pair is immutable.
+ * A Pair contains two unordered non-null elements of the same type. A pair is immutable.
  * 
  * @author pkalluri
  * 
@@ -13,10 +13,12 @@ public class Pair<E>{
 	
 	/***
 	 * Creates a new pair.
-	 * @param a one element
-	 * @param b another element 
+	 * @param a one non-null element
+	 * @param b another non-null element 
+	 * @throws IllegalArgumentException if either element is null
 	 */
 	public Pair(E a, E b) {
+		if (a == null || b == null) { throw new IllegalArgumentException(); }
 		this.pair = new HashSet<E>();
 		pair.add(a);
 		pair.add(b);
@@ -78,12 +80,15 @@ public class Pair<E>{
 	 */
 	@Override
 	public String toString() {
+		
+		//Alternative 
 //		String str = "(";
 //		for (E elt : pair) {
 //			str += elt;
 //			str += ",";
 //		}
 //		return str.substring(0, str.length()-1)+")";
+		
 		String str = "";
 		for (E elt : pair) {
 			str += elt;

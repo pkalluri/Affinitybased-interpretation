@@ -3,11 +3,11 @@ import java.text.NumberFormat;
 import java.util.Map;
 
 /***
- * The ActionKnowledge corresponding to a particular action holds the relative observation distribution of that action over the RelationshipTypes.
+ * An ActionROD corresponding to a particular action holds the relative observation distribution of that action over the RelationshipTypes.
  * @author pkalluri
  *
  */
-public class ActionKnowledge {
+public class ActionROD {
 	/***
 	 * Relative observation distribution (R.O.D.) over the RelationshipTypes.
 	 * Constraint: The sum of the R.O.D. probabilities over the RelationshipTypes always equals 1.
@@ -22,7 +22,7 @@ public class ActionKnowledge {
 	 * Construct the ActionKnowledge containing the given relativeObservationDistribution.
 	 * @param relativeObservationDistribution the relative observation distribution over RelationshipTypes for this ActionKnowledge
 	 */
-	public ActionKnowledge(Map<RelationshipType,Double> relativeObservationDistribution) {
+	public ActionROD(Map<RelationshipType,Double> relativeObservationDistribution) {
 		this.relativeObservationDistribution = relativeObservationDistribution;
 	}
 	
@@ -36,7 +36,7 @@ public class ActionKnowledge {
 	 * @param ratioPermittedWithinROD the ratio between two probabilities in this action's 
 	 * relative observation distribution must always be 1 or this ratio
 	 */
-	public ActionKnowledge(Map<RelationshipType,Boolean> likelyGivenRelationshipType, double ratioPermittedWithinROD) {
+	public ActionROD(Map<RelationshipType,Boolean> likelyGivenRelationshipType, double ratioPermittedWithinROD) {
 		this.relativeObservationDistribution = ProbabilityMapUtility.createProbabilityMap(likelyGivenRelationshipType, ratioPermittedWithinROD);
 	}
 
@@ -57,27 +57,31 @@ public class ActionKnowledge {
 	 * @param relationshipType
 	 * @return the relative probability of observation of this action for the given RelationshipType
 	 */
-	public Double getProbabilityGiven(RelationshipType relationshipType) {
+	public Double getRelativeProbabilityGiven(RelationshipType relationshipType) {
 		return relativeObservationDistribution.get(relationshipType);
 	}
 	
 	@Override
 	public String toString() {
-		assert isValid();
-		String toPrint = "{ ";
-		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
-			toPrint += entry.getKey().toString().charAt(0) + "=" + new DecimalFormat("##.##").format(entry.getValue()) + "/";
-		}
-		toPrint = toPrint.substring(0, toPrint.length()-1) + "}";
+		//Alternative
+//		assert isValid();
+//		String toPrint = "{ ";
+//		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
+//			toPrint += entry.getKey().toString().charAt(0) + "=";
+//			
+//			NumberFormat format = NumberFormat.getPercentInstance();
+//			format.setMinimumIntegerDigits(2);
+//			toPrint += format.format(entry.getValue()) + "|";		
+//		}
+//		toPrint = toPrint.substring(0, toPrint.length()-1) + "}";
 		
 		return this.relativeObservationDistribution.toString();
 	}
 	
-	public String toShortString() {
+	public String toConciseString() {
 		assert isValid();
 		String toPrint = "";
 		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
-//			toPrint += new DecimalFormat("##.##").format(entry.getValue()) + "/";
 			NumberFormat format = NumberFormat.getPercentInstance();
 			format.setMinimumIntegerDigits(2);
 			toPrint += format.format(entry.getValue()) + "|";

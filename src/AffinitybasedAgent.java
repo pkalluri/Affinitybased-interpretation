@@ -10,7 +10,9 @@ import java.util.Set;
  * Subsequently, the AffinitybasedAgent is able to use the inferred affinity relations to choose the most probable
  * statement from multiple possible statements about the scenario.
  * 
- * This code implements the affinity based reasoning described in Kalluri & Gervas (2017).
+ * The AffinitybasedAgent currently assumes a principle of implicit response: it assumes that in ActionEvents about 
+ * non-agents, the non-agents are in fact emotional stand-ins for recently observed agents.
+ * 
  * @author pkalluri
  *
  */
@@ -19,12 +21,12 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	/***
 	 * The agent's knowledge about actions.
 	 */
-	private final Map<String, ActionKnowledge> actionKnowledgebase;
+	private final Map<String, ActionROD> actionKnowledgebase;
 	
 	/***
-	 * The Strings that the agent knows refer to objects.
+	 * The Strings that the agent knows refer to non-agents.
 	 */
-	private final Set<String> knownObjects;
+	private final Set<String> knownNonagents;
 	
 	/***
 	 * The agent's memory of recently observed agents.
@@ -38,42 +40,66 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	
 	private final boolean verbose;
 	
+	private NumberFormat percentageFormat; //convenient format to use for percentages
+	
 	////////////////////////////////////////////////////////////
 	//////// CONSTRUCTOR ///////////////////////////////////////
 	////////////////////////////////////////////////////////////
 	
 	/***
-	 * Create AffinitybasedAgent with the given actionKnowledgebase and knowledge of the given knownObjects.
+	 * Create AffinitybasedAgent with the given actionKnowledgebase and knowledge of the given knownNonagents.
 	 * @param actionKnowledgebase the agent's knowledge about actions
-	 * @param knownObjects the Strings that the agent knows refer to objects.
+	 * @param knownNonagents the Strings that the agent knows refer to objects.
 	 * @param verbose
 	 */
-	public AffinitybasedAgent(Map<String, ActionKnowledge> actionKnowledgebase, Set<String> knownObjects, boolean verbose) {
+	public AffinitybasedAgent(Map<String, ActionROD> actionKnowledgebase, Set<String> knownNonagents, boolean verbose) {
 		this.actionKnowledgebase = actionKnowledgebase;
-		this.knownObjects = knownObjects;
+		this.knownNonagents = knownNonagents;
 		
 		this.rememberedAgents = new RecentlyObservedAgentsMemory();
 		this.rememberedWorldModel = null;
 		
 		this.verbose = verbose;
+		
+		this.percentageFormat = NumberFormat.getPercentInstance();
+		this.percentageFormat.setMinimumIntegerDigits(2);
 	}
 
 	////////////////////////////////////////////////////////////
-	//////// INTERPRETTING A SOCIAL SCENARIO ///////////////////
+	//////// READING SOCIAL SCENARIO ///////////////////////////
 	////////////////////////////////////////////////////////////
 
 	/***
-	 * Reads the given scenario, given the scenario may or may not be a followupScenario.
-	 * @param scenario
-	 * @param followupScenario
-	 * @throws InsufficientKnowledgeException
+	 * Read the given scenario, given the scenario may or may not be a followupScenario.
+	 * If the scenario is a followupScenario, then memory flows continuously from the last interpreted scenario 
+	 * into the interpretation of this scenario.
+	 * @param scenario the scenario to read
+	 * @param followupScenario true iff the agent should consider its memory from the previous scenario while building
+	 * @throws InsufficientKnowledgeException there was insufficient knowledge to read the scenario
 	 */
 	public void read(Scenario scenario, boolean followupScenario) throws InsufficientKnowledgeException {
-		this.getWorldModelOf(scenario, followupScenario);
+		this.getWorldModelOf(scenario, followupScenario, false, null);
 	}
 	
 	/***
-	 * Build a world model of the given scenario, given the scenario may or may not be a followupScenario.
+	 * Read the given scenario focusing on the given relationship, given the scenario may or may not be a followupScenario.
+	 * Focusing on the given relationship means that, if this agent is verbose, it will only log events affecting at least one agent of the relationship
+	 * and will only log beliefs regarding this relationship.
+	 * If the scenario is a followupScenario, then memory flows continuously from the last interpreted scenario 
+	 * into the interpretation of this scenario.
+	 * @param scenario the scenario to read
+	 * @param followupScenario true iff the agent should consider its memory from the previous scenario while building
+	 * @throws InsufficientKnowledgeException there was insufficient knowledge to read the scenario
+	 */
+	public void read(Scenario scenario, boolean followupScenario, Pair<String> relationship) throws InsufficientKnowledgeException {
+		this.getWorldModelOf(scenario, followupScenario, true, relationship);
+	}
+	
+	/***
+	 * Build a world model of the given scenario with a possible focus on the given relationship,
+	 * given the scenario may or may not be a followupScenario.
+	 * Focusing on the given relationship means that, if this agent is verbose, it will only log events affecting at least one agent of the relationship
+	 * and will only log beliefs regarding this relationship.
 	 * If the scenario is a followupScenario, then memory flows continuously from the last interpreted scenario 
 	 * into the interpretation of this scenario.
 	 * @param scenario the scenario to build a world model of
@@ -81,55 +107,115 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @return the world model of the given scenario 
 	 * @throws InsufficientKnowledgeException there was insufficient knowledge to get a world model of the scenario
 	 */
-	private AffinitybasedWorldModel getWorldModelOf(Scenario scenario, boolean followupScenario) throws InsufficientKnowledgeException {
-		AffinitybasedWorldModel worldModel = new AffinitybasedWorldModel();
-		if (!followupScenario) {
-			rememberedAgents.reset();
-		}
+	private AffinitybasedWorldModel getWorldModelOf(Scenario scenario, boolean followupScenario, boolean focus, Pair<String> relationship) throws InsufficientKnowledgeException {
 		if (verbose) {
-			System.out.format("%-24s %-24s %s %n", "", "(Friend|Neutral|Enemy)", "(Friend|Neutral|Enemy)");
-
-			System.out.format("%-24s %-24s %s %n", "Event", "Action R.O.D.", "Beliefs about relationships");
-
+			this.printThreeColumnTextLine("", "(Friend|Neutral|Enemy)", "(Friend|Neutral|Enemy)");
+			this.printThreeColumnTextLine("Event", "Action R.O.D.", "Beliefs about relationships");
 			System.out.println("----------------------------------------------------------------");
 		}
+		
+		//Reset memory
+		AffinitybasedWorldModel worldModel = new AffinitybasedWorldModel();
+		if (!followupScenario) { //new scneario, reset memory of agents
+			rememberedAgents.reset();
+		}
+		this.rememberedWorldModel = worldModel;
+		
 		for (ActionEvent actionEvent : scenario.actionEvents ) {
 			//check for knowledge
 			if (	!actionKnowledgebase.containsKey(actionEvent.action)	) { 
 				throw new InsufficientKnowledgeException (actionEvent.action);
 			}
-			ActionKnowledge actionKnowledge = actionKnowledgebase.get(actionEvent.action);
+			ActionROD actionKnowledge = actionKnowledgebase.get(actionEvent.action);
 			try {
 				ActionEvent fullActionEvent = this.getFullActionEvent(actionEvent); //get action event with 2 agents, by assuming implicit response
 				
 				worldModel.update(fullActionEvent, actionKnowledge);
-				this.updateMemory(fullActionEvent); //update memory based on this unit
+				this.updateMemory(fullActionEvent);
+				
+				if (verbose) {
+					if (!focus) {
+						String worldModelConciseString = worldModel.toConciseString();
+						String newline = System.getProperty("line.separator");
+						if (worldModelConciseString.contains(newline) ) { // long world model string
+							worldModelConciseString = this.tabOverMultiLineString(worldModelConciseString);
+						}						
+						this.printThreeColumnTextLine(actionEvent.toString(), actionKnowledge.toConciseString(), worldModelConciseString);				
+					} else { 
+						if (fullActionEvent.containsEither(relationship)) { //focus on only logging information relevant to the given relationship
+							String worldModelString = worldModel.toConciseString(relationship); //(will never be long string)
+							this.printThreeColumnTextLine(actionEvent.toString(), actionKnowledge.toConciseString(), worldModelString);				
+						}
+					}
+				}
 			} catch (UnableToFillActionEventException e) {
 				this.updateMemory(actionEvent); //still update memory
+				
+				if (verbose) {
+					if (!focus) {
+						String worldModelConciseString = worldModel.toConciseString();
+						String newline = System.getProperty("line.separator");
+						if (worldModelConciseString.contains(newline) ) { // long world model string
+							worldModelConciseString = this.tabOverMultiLineString(worldModelConciseString);
+						}						
+						this.printThreeColumnTextLine(actionEvent.toString(), actionKnowledge.toConciseString(), worldModelConciseString);				
+					} else { 
+						//don't print, not relevant to focus
+					}
+				}
 			}
-			
-			if (verbose) {
-				String worldModelString = worldModel.toShortString().replaceAll("(?m)^", "\t\t\t\t\t");
-				if (worldModelString != "") {worldModelString = worldModelString.substring(5);}
-				System.out.format("%-24s %-24s %s %n", actionEvent, actionKnowledge.toShortString(), worldModelString);				
-			}
-			
 		}//done with events
 		worldModel.reflectOnAndRefineBeliefs();
+		
 		if (verbose) {
-			String worldModelString = worldModel.toShortString().replaceAll("(?m)^", "\t\t\t\t\t");
-			if (worldModelString != "") {worldModelString = worldModelString.substring(5);}
-			System.out.format("%-24s %-24s %s %n", "Reflecting", "", worldModelString);				
+			if (!focus) {
+				String worldModelConciseString = worldModel.toConciseString();
+				String newline = System.getProperty("line.separator");
+				if (worldModelConciseString.contains(newline) ) { // long world model string
+					worldModelConciseString = this.tabOverMultiLineString(worldModelConciseString);
+				}						
+				this.printThreeColumnTextLine("Reflecting", "", worldModelConciseString);				
+			} else { 
+				String worldModelString = worldModel.toConciseString(relationship); //(will never be long string)
+				this.printThreeColumnTextLine("Reflecting", "", worldModelString);				
+			}
+			
+			System.out.println(); //end of reading this scenario
 		}
-		if(verbose) {System.out.println();}
-		this.rememberedWorldModel = worldModel;
 		return worldModel;
 	}
+	
+	/***
+	 * Return true iff the given actionEvent is about the given relationship.
+	 * @param actionEvent
+	 * @param relationship
+	 * @return true iff the given actionEvent is about the given relationship
+	 */
+	public boolean actionEventIsAbout(ActionEvent actionEvent, Pair<String> relationship) {
+		Set<String> eventAgents = new HashSet<String>();
+		eventAgents.add(actionEvent.actor);
+		eventAgents.add(actionEvent.actedUpon);		
+		return (eventAgents.equals(relationship.getElements()));
+	}
+	
 	////////////////////////////////////////////////////////////
 	//////// QUERYING RECENT WORLD MODEL ///////////////////////
 	////////////////////////////////////////////////////////////
+	
 	/***
-	 * State the belief regarding the given relationship given the most recently observed WorldModel.
+	 * Get map mapping RelationshipTypes to believed probability of the RelationshipTypes, for the given relationship
+	 * and the recently read scenario.
+	 * @param relationship
+	 * @return map mapping RelationshipTypes to believed probability of the RelationshipTypes, for the given relationship
+	 * and recently read scenario
+	 */
+	public Map<RelationshipType,Double> getBeliefs(Pair<String> relationship) {
+		return this.rememberedWorldModel.getBeliefs(relationship);
+	}
+	
+	/***
+	 * State the belief regarding the RelationshipType and confidence for the given relationship
+	 * given the most recently read scenario.
 	 * @param relationship
 	 */
 	public void stateBelief(Pair<String> relationship) {
@@ -154,26 +240,13 @@ public class AffinitybasedAgent implements TricopaParticipant {
 			str += likelyRelationshipType.toString().toLowerCase() + " or ";
 		}
 		str = str.substring(0,str.length()-4) + " relationship with ";
-		NumberFormat format = NumberFormat.getPercentInstance();
-		format.setMinimumIntegerDigits(2);
-		str += format.format(highestProbability) + " confidence.";
+		str += this.percentageFormat.format(highestProbability) + " confidence.";
 		
 		System.out.println(str);
-	}
-//	
-//	/***
-//	 * Helper: gets a string representation of the relationship 
-//	 * @param p
-//	 * @return
-//	 */
-//	private String relationshipString(Pair relationship) {
-//		relationship.getElements().
-//		return 
-//	}
-	
+	}	
 
 	////////////////////////////////////////////////////////////
-	//////// MORE REASONING ABOUT SOCIAL SCENARIOS /////////////
+	//////// CHOOSING BETWEEN INTERPRETATIONS  /////////////////
 	////////////////////////////////////////////////////////////
 	
 	/***
@@ -181,13 +254,13 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @param premise
 	 * @param possibleChoices
 	 * @return the number of the choice (1 or 2) thought more likely to apply now
-	 * @throws InsufficientKnowledgeException
-	 * @throws UndecidedAgentException
+	 * @throws InsufficientKnowledgeException there was insufficient knowledge to get a world model of the scenario
+	 * @throws UndecidedAgentException the agent was unable to decide between the choices
 	 */
 	private int choiceOfPlausibleAlternatives(Scenario premise, List<Scenario> possibleChoices) 
 					throws InsufficientKnowledgeException, UndecidedAgentException {
-		AffinitybasedWorldModel worldModel = getWorldModelOf(premise, false);
-		RecentlyObservedAgentsMemory preChoosingMemory = rememberedAgents.clone();
+		AffinitybasedWorldModel worldModel = getWorldModelOf(premise, false, false, null);
+		RecentlyObservedAgentsMemory preChoosingMemory = new RecentlyObservedAgentsMemory(this.rememberedAgents); //clone
 		
 		//Consider choices
 		int longestDescriptionLength = getMaxDescriptionLength(possibleChoices);
@@ -198,17 +271,15 @@ public class AffinitybasedAgent implements TricopaParticipant {
 		int choiceNumber = 0;
 		//keep track of highest probability description
 		for (Scenario choice : possibleChoices) {
-
 			choiceNumber ++;
 			
-//			if (this.verbose) {System.out.println("...agent is reading a possible interpretation...");}
 			double probabilityOfThisChoice = 1;
-			double sumOfEventProbs = 0; // the sum of the probabilities of all events 
-			int numTimesUpdated = 0;
+			double sumOfEventProbs = 0; // the sum of the probabilities of all events (used for normalizing)
+			int numProbabilityUpdates = 0;
 			
-			rememberedAgents.setRecentlyObservedAgents(preChoosingMemory.getSecondToLastObservedAgent(), preChoosingMemory.getLastObservedAgent());
+			this.rememberedAgents = preChoosingMemory;
 			if (verbose) {
-				System.out.format("%-24s %-24s %s %n", "Possible event", "Action R.O.D.","p");
+				this.printThreeColumnTextLine("Possible event", "Action R.O.D.","p");
 				System.out.println("----------------------------------------------------------------");
 			}
 			for (ActionEvent actionEvent : choice.actionEvents ) {
@@ -216,59 +287,50 @@ public class AffinitybasedAgent implements TricopaParticipant {
 				if (	!actionKnowledgebase.containsKey(actionEvent.action)	) { 
 					throw new InsufficientKnowledgeException (actionEvent.action);
 				}
-				ActionKnowledge actionKnowledge = actionKnowledgebase.get(actionEvent.action);
+				ActionROD actionKnowledge = actionKnowledgebase.get(actionEvent.action);
 				
 				try {
 					ActionEvent fullActionEvent = this.getFullActionEvent(actionEvent); //get valid unit	
 
 					double probabilityOfThisEvent = worldModel.probabilityOf(fullActionEvent,actionKnowledge );
 					sumOfEventProbs += probabilityOfThisEvent;
-					probabilityOfThisChoice *= probabilityOfThisEvent;
+					probabilityOfThisChoice *= probabilityOfThisEvent;	
+					numProbabilityUpdates ++;
+					this.updateMemory(fullActionEvent); //update memory based on this unit
 					
 					if (verbose) {
-						NumberFormat format = NumberFormat.getPercentInstance();
-						format.setMinimumIntegerDigits(2);
-						System.out.format("%-24s %-24s %s %n", actionEvent, actionKnowledge.toShortString(),format.format(probabilityOfThisEvent), "") ;
-					}				
-
-					numTimesUpdated ++;
-					this.updateMemory(fullActionEvent); //update memory based on this unit
+						this.printThreeColumnTextLine(actionEvent.toString(), actionKnowledge.toConciseString(),this.percentageFormat.format(probabilityOfThisEvent)) ;
+					}			
 				} catch (UnableToFillActionEventException e) {
-					if (verbose) {
-						NumberFormat format = NumberFormat.getPercentInstance();
-						format.setMinimumIntegerDigits(2);
-						System.out.format("%-24s %-24s %s %n", actionEvent, actionKnowledge.toShortString(), "N/A") ;
-					}		
 					this.updateMemory(actionEvent); //update memory based on original unit
+					if (verbose) {
+						this.printThreeColumnTextLine(actionEvent.toString(), actionKnowledge.toConciseString(), "N/A") ;
+					}		
 				}
 			}//done with units
 			
-			double eventProbForNormalizing = sumOfEventProbs/(double)numTimesUpdated;
-			for (int i = numTimesUpdated; i < longestDescriptionLength; i++) {
-				if (verbose) {
-					NumberFormat format = NumberFormat.getPercentInstance();
-					format.setMinimumIntegerDigits(2);
-					System.out.format("%-24s %-24s %s %n", "Normalizing", "", format.format(eventProbForNormalizing), "") ;
-				}		
-				probabilityOfThisChoice *= eventProbForNormalizing;
-			}//done normalizing
+			if (numProbabilityUpdates != 0) {
+				double eventProbForNormalizing = sumOfEventProbs/(double)numProbabilityUpdates; //average
+				for (int i = numProbabilityUpdates; i < longestDescriptionLength; i++) {
+					if (verbose) {
+						this.printThreeColumnTextLine("Normalizing", "", this.percentageFormat.format(eventProbForNormalizing)) ;
+					}		
+					probabilityOfThisChoice *= eventProbForNormalizing;
+				}//done normalizing
+			}
 			
-			if (numTimesUpdated == 0) {
-				probabilityOfThisChoice = -1; //do not consider complete disjoint
-//				if(verbose) {System.out.println("Choice not considered; Assigned probability of " + probabilityOfThisChoice);}
+			if (numProbabilityUpdates == 0) {
+				probabilityOfThisChoice = 0; //do not reward complete disjoint
 			}
 			
 			if (verbose) {
-				NumberFormat format = NumberFormat.getPercentInstance();
-				format.setMinimumIntegerDigits(2);
-				System.out.format("%-24s %-24s %s %n", "", "", "P=" + format.format(probabilityOfThisChoice), "") ;
-				System.out.println();
-//				System.out.println("Probability of this choice: " + format.format(probabilityOfThisChoice));
+				this.printThreeColumnTextLine("", "", "P=" + this.percentageFormat.format(probabilityOfThisChoice)) ;
+				System.out.println(); //end of this choice
 			}
 			
 			//update best choice
-			if (probabilityOfThisChoice == probabilityOfBestChoice) {
-				System.out.println("The agent says: \"I can't make a decision.\"");
+			if (choiceNumber!=1 && probabilityOfThisChoice == probabilityOfBestChoice) { //tie
+				if(verbose) {System.out.println("I am undecided.");}
 				throw new UndecidedAgentException();
 			} else if (probabilityOfThisChoice > probabilityOfBestChoice) {
 				probabilityOfBestChoice = probabilityOfThisChoice;
@@ -282,12 +344,19 @@ public class AffinitybasedAgent implements TricopaParticipant {
 		return bestChoiceNumber;
 
 	}
+	
+	/***
+	 * Get the length of the longest Scenario in the given list of Scenarios.
+	 * @param scenarios the list of Scenarios to compare the lengths of
+	 * @return the length of the longest Scenario in the given list of Scenarios
+	 */
+	private int getMaxDescriptionLength(List<Scenario> scenarios) {
+		return Math.max(scenarios.get(0).length, scenarios.get(1).length);
+	}
 
 	@Override
 	public int doTricopaTask(TricopaTask tricopaTask) throws InsufficientKnowledgeException, UndecidedAgentException {
-//		if (this.verbose) {System.out.println("...agent is reading premise...");}
 		int choice = this.choiceOfPlausibleAlternatives(tricopaTask.premise, tricopaTask.possibleChoices);
-//		if (verbose) {System.out.println("Agent chose: " + choice);}
 		return choice;
 	}
 	
@@ -321,46 +390,41 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	
 	/***
  	 * When encountering non-agents (empty or objects) in ActionEvent slots, try to 
-	 * fill the ActionEvents using an assumption that the non-agents are in fact emotional stand-ins
-	 * for recently observed agents.
+	 * fill the ActionEvents using a principle of implicit response.
+	 * This assumes that the non-agents are in fact emotional stand-ins for recently observed agents.
 	 * @param actionEvent
 	 * @return a full ActionEvent 
 	 * @throws UnableToFillActionEventException if unable
 	 */
 	private ActionEvent getFullActionEvent(ActionEvent actionEvent) throws UnableToFillActionEventException {		
-		boolean success = true;
+		boolean full = true;
 	
 		ActionEvent modifiedActionEvent =  actionEvent;
-		
 		if (!this.isAgent(	actionEvent.actor) ) {
-			success = false;
 			try {
 				modifiedActionEvent = this.replaceActor(actionEvent);
-				success = true;
+				full = true;
 			} catch (UnableToFillActionEventException e) {
-				//not successful
+				full = false;
 			}
-			
 		}//replaced
 		if (!this.isAgent(	actionEvent.actedUpon) ) {
-			success = false;
 			try {
 				modifiedActionEvent = this.replaceActedUpon(actionEvent);
-				success = true;
+				full = true;
 			} catch (UnableToFillActionEventException e) {
-				//not successful
+				full = false;
 			}
 		}//replaced
 		
-		if (!success) { throw new UnableToFillActionEventException(); }
-
+		if (!full) { throw new UnableToFillActionEventException(); }
 		return modifiedActionEvent;			
 	}
 	
 	/***
-	 * When an observer encounters non-agents (empty or objects) in the actor slot of an ActionEvent,
-	 * try to replace the actor using an assumption that the non-agents are in fact emotional stand-ins
-	 * for recently observed agents.
+ 	 * When encountering non-agents (empty or objects) in ActionEvent actor slots, try to 
+	 * fill the ActionEvents using a principle of implicit response.
+	 * This assumes that the non-agents are in fact emotional stand-ins for recently observed agents.
 	 * @param actionEvent
 	 * @return an ActionEvent with replaced actor
 	 * @throws UnableToFillActionEventException if unable
@@ -374,9 +438,11 @@ public class AffinitybasedAgent implements TricopaParticipant {
 			modifiedActionEvent = new ActionEvent(rememberedAgents.getSecondToLastObservedAgent(),actionEvent.action,actionEvent.actedUpon);					
 		}
 		
-		if (modifiedActionEvent == null) { throw new UnableToFillActionEventException();}
-		
-		return modifiedActionEvent;
+		if (modifiedActionEvent == null) { 
+			throw new UnableToFillActionEventException();
+		} else { 
+			return modifiedActionEvent;
+		}
 	}
 	
 	/***
@@ -389,19 +455,18 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 */
 	private ActionEvent replaceActedUpon(ActionEvent descriptionUnit) throws UnableToFillActionEventException {
 		ActionEvent modifiedActionEvent = null;
-		String replacement_character;
 
 		if (isAgent(rememberedAgents.getLastObservedAgent()) && !descriptionUnit.actor.equals(rememberedAgents.getLastObservedAgent())) { //if different
-			replacement_character = rememberedAgents.getLastObservedAgent(); //use last
-			modifiedActionEvent = new ActionEvent(descriptionUnit.actor,descriptionUnit.action,replacement_character);					
+			modifiedActionEvent = new ActionEvent(descriptionUnit.actor,descriptionUnit.action,this.rememberedAgents.getLastObservedAgent());					
 		} else if (isAgent(rememberedAgents.getSecondToLastObservedAgent()) && !descriptionUnit.actor.equals(rememberedAgents.getSecondToLastObservedAgent())) { //if different
-			replacement_character = rememberedAgents.getSecondToLastObservedAgent(); //use second to last
-			modifiedActionEvent = new ActionEvent(descriptionUnit.actor,descriptionUnit.action,replacement_character);					
+			modifiedActionEvent = new ActionEvent(descriptionUnit.actor,descriptionUnit.action,this.rememberedAgents.getSecondToLastObservedAgent());					
 		}
 
-		if (modifiedActionEvent == null) { throw new UnableToFillActionEventException();}
-
-		return modifiedActionEvent;
+		if (modifiedActionEvent == null) {
+			throw new UnableToFillActionEventException();
+		} else {
+			return modifiedActionEvent;
+		}
 	}
 	
 	////////////////////////////////////////////////////////////
@@ -414,16 +479,32 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @return true iff the String s refers to an agent
 	 */
 	private boolean isAgent(String s) {
-		return (s!=null && !knownObjects.contains(s));
+		return (s!=null && !knownNonagents.contains(s));
+	}
+	
+	////////////////////////////////////////////////////////////
+	//////// HELPERS - RE: VERBOSITY ///////////////////////////
+	////////////////////////////////////////////////////////////
+	
+	/***
+	 * Helper: format text into clean lines of text with 3 columns.
+	 * @param s1 the text to be put in column 1
+	 * @param s2 the text to be put in column 2
+	 * @param s3 the text to be put in column 3
+	 */
+	private void printThreeColumnTextLine(String s1, String s2, String s3) {
+		System.out.format("%-24s %-24s %s %n", s1, s2, s3);
 	}
 	
 	/***
-	 * Get the length of the longest Scenario in the given list of Scenarios.
-	 * @param scenarios the list of Scenarios to compare the lengths of
-	 * @return the length of the longest Scenario in the given list of Scenarios
+	 * Helper: get a version of the given multi-line string with all lines tabbed over.
+	 * @param str a multi-line string
+	 * @return
 	 */
-	private int getMaxDescriptionLength(List<Scenario> scenarios) {
-		return Math.max(scenarios.get(0).length, scenarios.get(1).length);
+	private String tabOverMultiLineString(String str) {
+		String s = str.replaceAll("(?m)^", "\t\t\t\t\t\t");
+		s = s.substring(6); //remove beginning of 
+		return s;
 	}
 	
 }

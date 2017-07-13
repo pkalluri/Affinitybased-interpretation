@@ -1,0 +1,126 @@
+accelerate 
+bolt E
+creep E
+dance F
+decelerate 
+flinch E
+jump 
+limp 
+meander N
+nod F
+roam FN
+run 
+shake E
+stroll FN
+turn
+wave F
+
+accompany F
+approach
+argueWith E
+avoid E
+block E
+bother E
+chase
+close E
+creepUpOn E
+escape E
+examine N
+fight E
+flirtWith F
+follow F
+hit E
+huddleWith F
+hug F
+ignore E
+kiss F
+knock 
+lead F
+leave E
+open 
+playWith F
+poke FE
+pull EF
+push E
+scratch E
+talkTo F
+tickle F
+
+atLoc 
+enter
+exit 
+inside 
+moveTo 
+outside 
+
+attack E
+bother E
+bully E
+console F
+defend E
+discipline F
+goodbye F
+greet F
+help F
+kidnap E
+possess
+prevent E
+quickly 
+rob E
+startle EN
+wakeUp 
+
+agree F
+disagree E
+forgotToDo 
+goal 
+hear 
+know 
+knowledgeGoal 
+lost 
+see 
+surprise 
+waitFor F
+
+afraid E
+angry E
+angryAt E
+annoy E
+asleep N
+bored EN
+cold 
+conflicted E
+curious N
+disabled 
+disappointed E
+dislike E
+embarrassed FN
+energized F
+excited F
+excitedThat F
+exhausted 
+fear E
+fearThat E
+happy F
+happyThat F
+hate E
+hot 
+injured E
+jealous F
+like F
+love F
+polite N
+reject E
+relaxed FN
+relief F
+sleepy N
+tired N
+unhappy E
+
+acquaintance NF
+enemies E
+friend F
+parent F
+sibling F
+stranger N
+

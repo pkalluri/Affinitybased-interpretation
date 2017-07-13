@@ -34,7 +34,7 @@ public class ProbabilityMapUtility {
 	 * @param <T>
 	 * @param relativeProbsGivenRelationshipType
 	 */
-	private static <T> void normalize(Map<T, Double> relativeProbsGivenRelationshipType) {
+	public static <T> void normalize(Map<T, Double> relativeProbsGivenRelationshipType) {
 		double sum = 0;
 		for (Double relativeProbability : relativeProbsGivenRelationshipType.values()) {
 			sum += relativeProbability;

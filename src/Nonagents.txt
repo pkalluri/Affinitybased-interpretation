@@ -2,3 +2,4 @@ DOOR
 D
 CORNER
 x
+OUTSIDE

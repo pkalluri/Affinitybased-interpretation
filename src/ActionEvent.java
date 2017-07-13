@@ -1,3 +1,5 @@
+import java.util.Set;
+
 /***
  * An ActionEvent consists of an actor agent completing an action optionally upon an acted upon agent.
  * An ActionEvent is immutable.
@@ -28,6 +30,16 @@ public final class ActionEvent {
 		this.actor = actor;
 		this.action = action;
 		this.actedUpon = actedUpon;
+	}
+	
+	/***
+	 * Return True iff the ActionEvent contains at least one agent from the given relationship.
+	 * @param relationship
+	 * @return True iff the ActionEvent contains at least one agents from the given relationship
+	 */
+	public boolean containsEither(Pair<String> relationship) {
+		Set<String> relationshipAgents = relationship.getElements();
+		return (relationshipAgents.contains(this.actor) || relationshipAgents.contains(this.actedUpon));
 	}
 	
 	@Override

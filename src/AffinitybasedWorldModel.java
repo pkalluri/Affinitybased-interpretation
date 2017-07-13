@@ -1,9 +1,19 @@
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/***
+ * The AffinitybasedWorldModel implements the WorldModel interface.
+ * 
+ * The AffinitybasedWorldModel currently assumes a principle of default bias: it assumes that upon reflection, 
+ * relationships that continue to be uninformative should be replaced with the default assumption that uninformative relationships
+ * are in fact more likely to be Neutral than Friend and more likely to be Friend than Enemy.
+ * @author pkalluri
+ *
+ */
 public class AffinitybasedWorldModel implements WorldModel{
 	/***
 	 * The agents known to exist
@@ -56,19 +66,19 @@ public class AffinitybasedWorldModel implements WorldModel{
 	}
 	
 	@Override
-	public void update(ActionEvent actionEvent, ActionKnowledge actionKnowledge) {		
+	public void update(ActionEvent actionEvent, ActionROD actionKnowledge) {		
 		/***
 		 * Add all implied pairs to the world model
 		 */
 		if (  !agents.contains(actionEvent.actor)  ) {
 			for (String agent : agents) {
-				affinityBeliefs.put(new Pair<String>(agent,actionEvent.actor)  , new SymmetricRelationshipModel(RelationshipType.values()));
+				affinityBeliefs.put(new Pair<String>(agent,actionEvent.actor)  , new SymmetricRelationshipModel());
 			}//done adding pairs
 			agents.add(actionEvent.actor);
 		}
 		if (  (!agents.contains(actionEvent.actedUpon))  ) {
 			for (String character : agents) {
-				affinityBeliefs.put(new Pair<String>(character,actionEvent.actedUpon)  , new SymmetricRelationshipModel(RelationshipType.values()));
+				affinityBeliefs.put(new Pair<String>(character,actionEvent.actedUpon)  , new SymmetricRelationshipModel());
 			}//done adding pairs
 			agents.add(actionEvent.actedUpon);
 		}
@@ -92,7 +102,7 @@ public class AffinitybasedWorldModel implements WorldModel{
 			} else {
 				timeToBeliefs = affinityBeliefHistory.get(actingPair);
 			}
-			timeToBeliefs.put(age, relationship.getCopyOfBeliefs());
+			timeToBeliefs.put(age, relationship.getBeliefs());
 		}
 		this.age ++;
 	}
@@ -105,7 +115,38 @@ public class AffinitybasedWorldModel implements WorldModel{
 		 * This serves as a heuristic for reasoning, because uninformative relationships obstruct reasoning
 		 * more than generally, heuristically true / sometimes untrue assumptions of neutrality.
 		 */
-		this.assumeUninformedRelationshipAreNeutralRelationships();
+//		this.assumeUninformedRelationshipAreNeutralRelationships();
+		this.assumeUninformedRelationshipAre( Arrays.asList(RelationshipType.ENEMY, RelationshipType.FRIEND, RelationshipType.NEUTRAL) ); 
+	}
+	
+	/***
+	 * Impose a partial belief that all uninformative relationships should in fact default to be
+	 * informed by a belief that the given orderedRelationshipTypes are in the increasing order of likelihood.
+	 * This serves as a heuristic for reasoning, because uninformative relationships obstruct reasoning
+	 * more than generally, heuristically true / sometimes untrue assumptions.
+	 */
+	private void assumeUninformedRelationshipAre(List<RelationshipType> orderedRelationshipTypes) {
+		for (Map.Entry<Pair<String>, SymmetricRelationshipModel> entry : this.affinityBeliefs.entrySet()) {
+			if (!entry.getValue().isInformative()) { //if all beliefs are uninformative, rewrite
+				SymmetricRelationshipModel defaultRelationshipModel = new SymmetricRelationshipModel(orderedRelationshipTypes);
+				entry.setValue(defaultRelationshipModel);
+				/***
+				 * Save if save parameter is ON.
+				 */
+				if (STORE_HISTORY) { 
+					Map<Integer,Map<RelationshipType,Double>> timeToBeliefs;
+					Pair<String> actingPair = entry.getKey();
+					if (!affinityBeliefHistory.containsKey(actingPair)) {
+						timeToBeliefs = new HashMap<Integer,Map<RelationshipType,Double>>();
+						affinityBeliefHistory.put(actingPair, timeToBeliefs);
+					} else {
+						timeToBeliefs = affinityBeliefHistory.get(actingPair);
+					}
+					timeToBeliefs.put(age, defaultRelationshipModel.getBeliefs());
+				}
+				
+			}
+		}
 	}
 	
 	/***
@@ -119,7 +160,6 @@ public class AffinitybasedWorldModel implements WorldModel{
 			if (!entry.getValue().isInformative()) { //if all beliefs are neutral, rewrite as neutral relationship
 				SymmetricRelationshipModel neutralRelationshipModel = new SymmetricRelationshipModel(RelationshipType.NEUTRAL, BIG_PROBABILITY_TO_SMALL_PROBABILITY_RATIO);
 				entry.setValue(neutralRelationshipModel);
-//				if (verbose) {System.out.println(" Reflecting --> " + this);}
 				/***
 				 * Save if save parameter is ON.
 				 */
@@ -132,7 +172,7 @@ public class AffinitybasedWorldModel implements WorldModel{
 					} else {
 						timeToBeliefs = affinityBeliefHistory.get(actingPair);
 					}
-					timeToBeliefs.put(age, neutralRelationshipModel.getCopyOfBeliefs());
+					timeToBeliefs.put(age, neutralRelationshipModel.getBeliefs());
 				}
 				
 			}
@@ -154,7 +194,7 @@ public class AffinitybasedWorldModel implements WorldModel{
 	}
 
 	@Override
-	public double probabilityOf(ActionEvent descriptionUnit, ActionKnowledge actionKnowledge) {
+	public double probabilityOf(ActionEvent descriptionUnit, ActionROD actionKnowledge) {
 		double DEFAULT_PROBABILITY = 1; //if pair doesn't match
 		
 		SymmetricRelationshipModelInterface relationship = this.affinityBeliefs.get(new Pair<String>(descriptionUnit.actor, descriptionUnit.actedUpon));
@@ -170,13 +210,17 @@ public class AffinitybasedWorldModel implements WorldModel{
 		return this.affinityBeliefs.toString();
 	}
 	
-	public String toShortString() {
+	/***
+	 * Get a concise String representation of current beliefs about relationships in the world.
+	 * @return a concise String representation
+	 */
+	public String toConciseString() {
 		String toPrint = "";
 		int MAX_NUMBER_OF_ENTRIES_PER_LINE = 5;
 		
 		int numberOfEntries = 0;
 		for (Map.Entry<Pair<String>, SymmetricRelationshipModel> entry : this.affinityBeliefs.entrySet()) {
-			toPrint += entry.getKey() + ":" + entry.getValue().toShortString() + ", ";
+			toPrint += entry.getKey() + ":" + entry.getValue().toConciseString() + ", ";
 			numberOfEntries ++;
 			if (numberOfEntries % MAX_NUMBER_OF_ENTRIES_PER_LINE == 0) {
 				toPrint += "\n";
@@ -186,24 +230,44 @@ public class AffinitybasedWorldModel implements WorldModel{
 		else { return toPrint.substring(0,toPrint.length()-2);}
 	}
 	
+	/***
+	 * Get a concise String representation of current beliefs about the given relationships only.
+	 * @param relationship
+	 * @return a concise String representation of current beliefs about the given relationships only
+	 */
+	public String toConciseString(Pair<String> relationship) {
+		String str = "";
+		SymmetricRelationshipModel relationshipModel = this.affinityBeliefs.get(relationship);
+		if (relationshipModel != null) {
+			str = relationship + ":" + relationshipModel.toConciseString();
+		} else {
+			str = relationship + ":" + new SymmetricRelationshipModel().toConciseString();
+		}
+		return str;
+	}
+	
 	//////////////////////////////////////////
 	/////// ADDED METHODS ////////////////////
 	//////////////////////////////////////////
 	
-	/***
-	 * Get the history of the world model as a map from each relationship to the history of that relationship.
-	 * @return the history of the world model as a map from each relationship to the history of that relationship
-	 */
-	public Map<Pair<String>, Map<Integer, Map<RelationshipType, Double>>> getHistory() {
-		return affinityBeliefHistory;
-	}
+	//Perhaps useful in the future
+//	/***
+//	 * Get the history of the world model as a map from each relationship to the history of that relationship.
+//	 * @return the history of the world model as a map from each relationship to the history of that relationship
+//	 */
+//	public Map<Pair<String>, Map<Integer, Map<RelationshipType, Double>>> getHistory() {
+//		return affinityBeliefHistory;
+//	}
 	
 	/***
-	 * Get the beliefs about the given relationship as a map from RelationshipType to believed probability of that RelationshipType.
-	 * @param relationship
-	 * @return
+	 * Get the beliefs about the given relationship as a map mapping possible RelationshipTypes to believed probability of the RelationshipTypes.
+	 * @param relationship 
+	 * @return the beliefs about the given relationship as a map mapping possible RelationshipTypes to believed probability of the RelationshipTypes
 	 */
 	public Map<RelationshipType, Double> getBeliefs(Pair<String> relationship) {
-		return this.affinityBeliefs.get(relationship).getCopyOfBeliefs();
+		if (!this.affinityBeliefs.containsKey(relationship)) {
+			return new SymmetricRelationshipModel().getBeliefs();
+		}
+		return this.affinityBeliefs.get(relationship).getBeliefs();
 	}
 }

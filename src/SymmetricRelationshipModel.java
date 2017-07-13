@@ -1,6 +1,7 @@
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -18,13 +19,14 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 	/***
 	 * Creates new, uninformed relationship model.
 	 */
-	public SymmetricRelationshipModel(RelationshipType[] relationshipTypes) {
+	public SymmetricRelationshipModel() {
 		beliefs = new HashMap<RelationshipType,Double>();
 		
-		double uniformProbability = 1./(double)(relationshipTypes.length);
-		for (RelationshipType type : relationshipTypes) {
+		double uniformProbability = 1./(double)(RelationshipType.values().length);
+		for (RelationshipType type : RelationshipType.values()) {
 	 		beliefs.put(type, uniformProbability);
 		}
+		assert isValid();
 	}
 	
 	/***
@@ -34,13 +36,32 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 	 * @param factor the factor by which the likelyRelationshipType is thought to be more likely than any other RelationshipType
 	 */
 	public SymmetricRelationshipModel(RelationshipType likelyRelationshipType, double factor) {
-		Map<RelationshipType, Boolean> likelyGivenRelationshipType = new HashMap<RelationshipType,Boolean>();
+		Map<RelationshipType, Boolean> beliefs = new HashMap<RelationshipType,Boolean>();
 		for (RelationshipType relationshipType : RelationshipType.values()) {
-			likelyGivenRelationshipType.put(relationshipType, false);
+			beliefs.put(relationshipType, false);
 		}
-		likelyGivenRelationshipType.put(likelyRelationshipType, true);
+		beliefs.put(likelyRelationshipType, true);
 
-		this.beliefs = ProbabilityMapUtility.createProbabilityMap(likelyGivenRelationshipType, factor);	
+		this.beliefs = ProbabilityMapUtility.createProbabilityMap(beliefs, factor);	
+		assert isValid();
+	}
+	
+	/***
+	 * Creates new relationship model informed by a belief that the given orderedRelationshipTypes are in the increasing order of likelihood.
+	 * @param orderedRelationshipTypes the RelationshipType thought to be likely
+	 * @param factor the factor by which the likelyRelationshipType is thought to be more likely than any other RelationshipType
+	 */
+	public SymmetricRelationshipModel(List<RelationshipType> orderedRelationshipTypes) {
+		Map<RelationshipType, Double> beliefs = new HashMap<RelationshipType,Double>();
+		double emphasis = 1;
+		for (RelationshipType relationshipType: orderedRelationshipTypes) {
+			beliefs.put(relationshipType, emphasis);
+			emphasis ++;
+		}
+		
+		ProbabilityMapUtility.normalize(beliefs);
+
+		this.beliefs = beliefs;
 	}
 	
 	//////////////////////////////////////////
@@ -48,10 +69,10 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 	//////////////////////////////////////////
 	
 	@Override
-	public void update(ActionKnowledge actionKnowledge) {
+	public void update(ActionROD actionKnowledge) {
 		double totalProbability = 0;
 		for (Map.Entry<RelationshipType, Double> belief : this.beliefs.entrySet()) {
-			double actionProbabilityGivenRelationshipType = actionKnowledge.getProbabilityGiven(belief.getKey());
+			double actionProbabilityGivenRelationshipType = actionKnowledge.getRelativeProbabilityGiven(belief.getKey());
 			double currRelativeProbability = (belief.getValue())*actionProbabilityGivenRelationshipType;
 			belief.setValue(currRelativeProbability);
 			totalProbability = totalProbability + currRelativeProbability;
@@ -61,13 +82,15 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 			//Normalize, so that probabilities sum to 1
 			belief.setValue( belief.getValue() / totalProbability);
 		}//done normalizing	
+		assert isValid();
 	}
 	
 	@Override
-	public void update(ActionKnowledge actionKnowledge, double emphasis) {
+	public void update(ActionROD actionKnowledge, double emphasis) {
 		for (int i=0; i<emphasis; i++) {
 			update(actionKnowledge);
 		}
+		assert isValid();
 	}
 	
 	@Override
@@ -81,30 +104,29 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 	}
 
 	@Override
-	public double probabilityOf(ActionKnowledge actionKnowledge) {
+	public double probabilityOf(ActionROD actionKnowledge) {
 		double probabilityOfObservation = 0;
 		
 		for (Entry<RelationshipType, Double> belief : this.beliefs.entrySet()) {
-			probabilityOfObservation += actionKnowledge.getProbabilityGiven(belief.getKey()) * belief.getValue();
+			probabilityOfObservation += actionKnowledge.getRelativeProbabilityGiven(belief.getKey()) * belief.getValue();
 		}
 		return probabilityOfObservation;
 	}
 
 	@Override
 	public boolean isInformative() {
-		boolean hasOpinion = false;
+		boolean isInformative = false;
 		int numEntries = this.beliefs.size();
 		for (Double val : this.beliefs.values()) {
 			if ((val - 1./(double)numEntries) >.001) { //has opinion
-				hasOpinion = true;
+				isInformative = true;
 			}
 		}
-		return hasOpinion;
+		return isInformative;
 	}
 
 	@Override
 	public String toString() {
-		assert isValid();
 		String toPrint = "{ ";
 		for (Map.Entry<RelationshipType, Double> entry : this.beliefs.entrySet()) {
 			toPrint += entry.getKey().toString().charAt(0) + "=" + new DecimalFormat("##.#").format(entry.getValue()) + " ";
@@ -113,8 +135,11 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 		
 	}
 	
-	public String toShortString() {
-		assert isValid();
+	/***
+	 * Get concise String representation.
+	 * @return
+	 */
+	public String toConciseString() {
 		String toPrint = "";
 		for (Map.Entry<RelationshipType, Double> entry : this.beliefs.entrySet()) {
 			NumberFormat format = NumberFormat.getPercentInstance();
@@ -140,16 +165,12 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 	//////////////////////////////////////////
 	
 	/***
-	 * Get map from the RelationshipTypes to the believed probability of each RelationshipType for this relationship.
+	 * Get map mapping the RelationshipTypes to the believed probability of each RelationshipType, for this relationship.
 	 * Beliefs must sum to 1.	 
 	 * @return map from the RelationshipTypes to the believed probability of each RelationshipType for this relationship
 	 */
-	public Map<RelationshipType,Double> getCopyOfBeliefs() {
-		Map<RelationshipType, Double> copy = new HashMap<RelationshipType,Double>();
-		for (Map.Entry<RelationshipType, Double> entry : this.beliefs.entrySet()) {
-			copy.put(entry.getKey(), new Double(entry.getValue().doubleValue()));
-		}
-		return copy;
+	public Map<RelationshipType,Double> getBeliefs() {
+		return new HashMap<RelationshipType,Double>(this.beliefs);
 	}
 
 }

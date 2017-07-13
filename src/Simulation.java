@@ -21,50 +21,45 @@ import java.util.Map;
 import java.util.Set;
 
 /***
- * Given specified files, spawns an AffinitybasedAgent, administers a single Scenario or a TricopaTask set to the agent, and prints a summary of the results.
- * 
- * Files may include a scenario file, a knowledge file, a Tricopa tasks file, and/or a Tricopa answers file.
- * Files' format is assumed to adhere to the instructions in the ReadMe.
+ * Given specified files, the Simulation class spawns an AffinitybasedAgent, administers a Scenario or TricopaTasks to the agent, and prints a summary of the results.
+ * Files' format must adhere to the instructions in the ReadMe.
  * 
  * @author pkalluri
  */
 public class Simulation {
 	
 	////////////////////////////////////////////////////////////
-	//////// FOR READING IN THE RELEVANT FILES /////////////////
+	//////// FOR READING IN FILES //////////////////////////////
 	////////////////////////////////////////////////////////////
 	
 	/***
-	 * Construct Scenario based on the indicated scenario file.
+	 * Get the Scenario based on the indicated Scenario File.
 	 * 
-	 * @param fileName the name of the scenario file
-	 * @return the scenario based on the indicated scenario file
+	 * @param fileName the name of the Scenario File
+	 * @return the scenario based on the indicated Scenario File
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
 	public static Scenario getScenarioFromFile(String fileName) throws URISyntaxException, IOException {
-		//String together lines
-		List<String> lines = Simulation.getLines(fileName);	
 		String linesTogether = "";
+		List<String> lines = Simulation.getLines(fileName);	
 		for (String line : lines) {
-			linesTogether += line.trim();
+			linesTogether += line.trim(); //String together lines
 		}
-
-		return Simulation.getScenario(linesTogether); //Construct scenario
+		return Simulation.getScenario(linesTogether);
 	}
 	
 	/***
-	 * Construct TricopaTask database based on the indicated Tricopa tasks file.
+	 * Get the TricopaTask database based on the indicated Tricopa Tasks File.
 	 * 
-	 * @param fileName the name of the Tricopa tasks file
+	 * @param fileName the name of the Tricopa Tasks File
 	 * @param verbose
-	 * @return the TricopaTask database based on the indicated Tricopa tasks file
+	 * @return the TricopaTask database based on the indicated Tricopa Tasks File
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
 	public static Map<Integer, TricopaTask> getTricopaTasksFromFile(String fileName, boolean verbose) throws IOException, URISyntaxException {
         Map<Integer,TricopaTask> tricopaTasks  = new HashMap<Integer,TricopaTask>();
-        
         List<String> lines = Simulation.getLines(fileName);	
 		
 		int taskNumber = -1;
@@ -87,47 +82,48 @@ public class Simulation {
 				readingPremise = true;
 			}
 			else if (isLiterals(line)) {
-				if (verbose) { System.out.println("LITERALS");}
-				Scenario currDescription = getScenario(line);
-				if (verbose) {System.out.println(currDescription.actionEvents);}
+				Scenario currScenario = getScenario(line);
+				if (verbose) {System.out.println("literals: " + currScenario.actionEvents);}
 				if (readingPremise) {
-					premise = currDescription;
+					premise = currScenario;
 					readingPremise = false;
 				} else {
-					possibleChoices.add(currDescription);
+					possibleChoices.add(currScenario);
 				}
 			} else { //if alternative narrative or blank space
 				//do nothing
 			}
 		}//done with all lines
-		//TODO add last task?
+		if (!(taskNumber==-1)) { //some tasks have occurred
+			tricopaTasks.put(	taskNumber, new TricopaTask(premise, possibleChoices)	);
+		}
 		return tricopaTasks;
 	}
 	
 	/***
-	 * Construct object set based on the indicated known objects file.
+	 * Get the Set of known non-agents based on the indicated Nonagents File.
 	 * 
-	 * @param fileName the name of the known objects file
-	 * @return object set based on the indicated known objects file
+	 * @param fileName the name of the known Nonagents File
+	 * @return the Set of known non-agents based on the indicated Nonagents File
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
-	public static Set<String> getObjectsFromFile(String fileName) throws URISyntaxException, IOException {
+	public static Set<String> getNonagentsFromFile(String fileName) throws URISyntaxException, IOException {
     	Set<String> objects = new HashSet<String>();
     	
         List<String> lines = Simulation.getLines(fileName);	
-    	
     	for (String line : lines) {
     		objects.add(line.trim());
     	}
+    	
     	return objects;
 	}
 	
 	/***
-	 * Construct answer database based on the indicated Tricopa answers file.
+	 * Get the database of answers based on the indicated Tricopa Answers File.
 	 * 
-	 * @param fileName the name of the Tricopa answers file
-	 * @return the answer database based on the indicated Tricopa answers file
+	 * @param fileName the name of the Tricopa Answers file
+	 * @return the database of answers based on the indicated Tricopa Answers File.
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
@@ -135,7 +131,6 @@ public class Simulation {
     	Map<Integer,Integer> answers = new HashMap<Integer,Integer>();
     	
         List<String> lines = Simulation.getLines(fileName);	
-    	
     	for (String line : lines) {
     		if (isNumbered(line)) {
 				int taskNumber = getTaskNumber(line);
@@ -153,21 +148,45 @@ public class Simulation {
 	}	
 	
 	/***
-	 * Construct ActionKnowledge database  based on the indicated knowledge file.
+	 * Get the Set of task numbers to exclude from the indicated Tricopa Exclusions File.
+	 * @param fileName the name of the Tricopa Exclusions File
+	 * @return the Set of task numbers to exclude from the indicated Tricopa Exclusions File
+	 * @throws IOException 
+	 * @throws URISyntaxException 
+	 */
+	public static Set<Integer> getExclusionsFromFile(String fileName) throws URISyntaxException, IOException {
+		Set<Integer> toExclude = new HashSet<Integer> ();
+        List<String> lines = Simulation.getLines(fileName);
+        for (String line : lines) {
+    		if (!isComment(line)) {
+    			String trimmedLine = line.trim();
+    			if (!trimmedLine.isEmpty()) {
+    				String[] nums = trimmedLine.split("\\s+");
+    				for (String num : nums) {
+    					toExclude.add(Integer.parseInt(num));
+    				}
+    			}
+    		}
+    	}
+    	return toExclude;
+	}
+	
+	/***
+	 * Get the ActionKnowledge database based on the indicated Knowledge File.
 	 * 
-	 * @param fileName the name of the knowledge file
+	 * @param fileName the name of the Knowledge File
 	 * @param verbose
-	 * @return the ActionKnowledge database based on the indicated knowledge file
+	 * @return the ActionKnowledge database based on the indicated Knowledge File.
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
-	public static Map<String, ActionKnowledge> getActionKnowledgebase(String fileName, boolean verbose) throws URISyntaxException, IOException {
+	public static Map<String, ActionROD> getActionKnowledgebase(String fileName, boolean verbose) throws URISyntaxException, IOException {
 		//The knowledge file is interpreted with the constraint that the ratio between two probabilities in a single action's relative observation distribution must always be 1 or this ratio:
 		double RATIO_PERMITTED_WITHIN_ROD = 2; 		
 		
 		List<String> lines = Simulation.getLines(fileName);	
     	
-		Map<String, ActionKnowledge> actionKnowledgebase = new HashMap<String, ActionKnowledge>();
+		Map<String, ActionROD> actionKnowledgebase = new HashMap<String, ActionROD>();
     	for (String line : lines) {
 			String trimmedLine = line.trim();
 			if (!trimmedLine.isEmpty()) {
@@ -194,16 +213,11 @@ public class Simulation {
 					}//done with all chars on this line
 				}
 				if(verbose) {System.out.println(expectationsGivenRelationshipType);}
-				actionKnowledgebase.put(args[0], new ActionKnowledge(expectationsGivenRelationshipType, RATIO_PERMITTED_WITHIN_ROD));
+				actionKnowledgebase.put(args[0], new ActionROD(expectationsGivenRelationshipType, RATIO_PERMITTED_WITHIN_ROD));
 			}
     	}//done with all lines
     	return actionKnowledgebase;
 	}
-	
-	
-	////////////////////////////////////////////////////////////
-	////////HELPERS FOR READING IN FILES////////////////////////
-	////////////////////////////////////////////////////////////
 	
 	/***
 	 * Get all lines from the indicated file.
@@ -213,64 +227,62 @@ public class Simulation {
 	 * @throws IOException
 	 */
 	private static List<String> getLines(String fileName) throws URISyntaxException, IOException {				
-		String s = fileName;
-		URL url = Simulation.class.getResource(s);
-//		System.out.println(url); //for debug
-		
-		if (url == null) {
-			throw new FileNotFoundException();
-		}
-		
+		String s = fileName;		
 		URI uri = Simulation.class.getResource(s).toURI();
-//		System.out.println(uri); //for debug
-		
+//		if (verbose) { System.out.println(uri);} //for debug
 		return Files.readAllLines(Paths.get(uri), Charset.defaultCharset());
 	}
 	
+	////////////////////////////////////////////////////////////
+	////////FOR PARSING LOWER-LEVEL TEXT////////////////////////
+	////////////////////////////////////////////////////////////
 	/***
-	 * Construct Scenario based on the given line of logical literals.
+	 * Get the Scenario based on the given line of logical literals.
 	 * @param line line of logical literals
 	 * @return scenario based on the given line of logical literals
 	 */
 	private static Scenario getScenario(String line) {
 		List<ActionEvent> scenarioUnits = new ArrayList<ActionEvent>();
 		
-		String REFERENCE_REGEX = "e[0-9]+|E[0-9]+"; //Regex to use for matching the e[#] notation used when one event refers to another event
-		String LITERAL_DELIMITER = "\\(|\\)"; //Regex to use for matching the ([literal]) notation of literals
+		String REFERENCE_REGEX = "e[0-9]+|E[0-9]+"; //Regex to use for matching the e# notation used when one event refers to another event
+		String LITERAL_DELIMITER = "\\(|\\)"; //Regex to use for matching the (literal) notation of literals
 		String[] literals = line.split(LITERAL_DELIMITER, 0);
 		
 		for (String literal : literals) {
 			if (!literal.isEmpty()) {
 				String[] args = literal.split("\\s");
-				if (args.length > 4) {
+				if (args.length != 3 && args.length!=4) {
+					//ignore this literal
 				}
 				else if (args.length>=1 && isPredicate(args[0])) { //predicate
-					//Turn it into a description unit
+					boolean validActionEvent = true;
+
+					//Turn it into an ActionEvent
 					String action = args[0].substring(0, args[0].length()-1);
+					//ignore args[1] which is the e# style tag
 					String actor = args[2];
-					String actedUpon = null; //for now
 					if (actor.matches(REFERENCE_REGEX)) {
-						actor = null; //replace with null
+						validActionEvent = false;
 					} 
 					
-					if (args.length == 4) {
+					String actedUpon = null; //for now
+					if (args.length == 4) { //there is an actedUpon
 						actedUpon = args[3];
-						
 						if (actedUpon.matches(REFERENCE_REGEX)) {
-							actedUpon = null; //replace with null
+							actedUpon = null;
+//							validActionEvent = false;
 						}
-					} else if (args.length == 3) {
-						actedUpon = null;
-					} else {
-						throw new IllegalArgumentException("A literal must have 3 or 4 arguments after its predicate.");
 					}
-						
-					scenarioUnits.add(new ActionEvent(actor, action, actedUpon));
+					
+					if (validActionEvent) {
+						scenarioUnits.add(new ActionEvent(actor, action, actedUpon));
+					} else {
+//						System.out.println("Problem args: " + Arrays.asList(args)); //debug what kind of literals are being ignored
+					}
 				}
 				
 			}//done creating description unit
 		}//done with all literals in this line
-
 		return new Scenario(scenarioUnits);
 	}
 
@@ -284,7 +296,7 @@ public class Simulation {
 		Collection<String> PREDICATES_TO_IGNORE = new ArrayList<String>();
 		PREDICATES_TO_IGNORE.add("par'");
 //		PREDICATES_TO_IGNORE.add("goal'");
-
+		
 		return string.endsWith(PREDICATE_END_TAG) && !PREDICATES_TO_IGNORE.contains(string);
 	}
 
@@ -309,6 +321,15 @@ public class Simulation {
 		} else { //if line is empty
 			return false;
 		}
+	}
+	
+	/***
+	 * Return true iff line begins with // (and is thus a comment).
+	 * @param line
+	 * @return true iff line begins with // (and is thus a comment)
+	 */
+	public static boolean isComment(String line) {
+		return line.startsWith("//");
 	}
 	
 
@@ -380,8 +401,8 @@ public class Simulation {
 			int taskNumber = numberedTricopaTask.getKey();			
 			TricopaTask tricopaTask = numberedTricopaTask.getValue();
 			if (verbose) {
-				System.out.println("****************************************************************");
-				System.out.println("\nTASK " + taskNumber);
+				System.out.println();
+				System.out.println("TASK " + taskNumber);
 			}
 			
 			try {
@@ -398,8 +419,8 @@ public class Simulation {
 				performanceOnTasks.put(taskNumber, TricopaTaskPerformance.INCOMPLETE);
 				if (verbose) {System.out.println("INCOMPLETE (THE CORRECT ANSWER WAS " + answers.get(taskNumber) + ")");}
 			}
-			System.out.println();
-
+			if (verbose) {System.out.println();}
+			if (verbose) {System.out.println("****************************************************************");}
 		}//done with all tasks
 		return performanceOnTasks;
 	}
@@ -414,23 +435,30 @@ public class Simulation {
 	 * @return short text description of number of tasks completed correctly, total number of tasks administered, and calculated percentage accuracy, given performanceOnTasks
 	 */
 	public static String getScoreStatement(Map<Integer, TricopaTaskPerformance> performanceOnTasks) {
-		int score = 0;
+		int numCorrect = 0;
+		int numAnswered = 0;
 		for ( TricopaTaskPerformance currPerformance : performanceOnTasks.values()) {
-			if (currPerformance.equals(TricopaTaskPerformance.CORRECT)) {score++;}
+			if (currPerformance.equals(TricopaTaskPerformance.CORRECT)) {numCorrect++; numAnswered++;}
+			else if (currPerformance.equals(TricopaTaskPerformance.INCORRECT)) {numAnswered++;}
 		}
 		int numTasks = performanceOnTasks.size();
 		
 		//Construct text
 		NumberFormat format = NumberFormat.getPercentInstance();
-		format.setMinimumFractionDigits(2);
-		return "\n\nTHIS AGENT'S SCORE ON THE TRICOPA CORPUS IS " + score + "/" + numTasks + "=" + format.format((double)score/(double)(numTasks));
+		format.setMinimumIntegerDigits(2);
+		
+		String statement = "";
+		statement += "ON THE " + numTasks + " TASKS, THE AGENT ANSWERED " + numAnswered + "/" + numTasks + "=" + format.format((double)numAnswered/(double)(numTasks)) + "\n";
+		statement += "ON THE " + numAnswered + " TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED " + numCorrect + "/" + numAnswered + "=" + format.format((double)numCorrect/(double)(numAnswered)) + "\n";
+		return statement;
 	}
 	
 	/***
-	 * Construct a table representation of performanceOnTasks, where each task number is mapped to 'X' for not administered, '1' for performed correctly,
-	 *  '-1' for performed incorrectly, or '0' for administered but agent was undecided.
+	 * TODO test more
+	 * Construct a table-like text representation of performanceOnTasks, where each task number is mapped to 'X' for not administered, '1' for performed correctly,
+	 *  '-1' for performed incorrectly, or '0' for administered but agent was undecided. This is useful for pasting directly into Excel and creating a heatmap.
 	 * @param performanceOnTasks
-	 * @return a table representation of performanceOnTasks
+	 * @return a table-like text representation of performanceOnTasks
 	 */
 	public static String getTableRepresentationOfPerformance(Map<Integer, TricopaTaskPerformance> performanceOnTasks) {
 		String sheet = "";
@@ -441,24 +469,24 @@ public class Simulation {
 		for (int currTaskNumber : orderedTaskNumbers) {
 			//add information about skipped tasks
 			for (int i =lastTaskNumber; i<currTaskNumber; i++) {
-				sheet += i+": \n";
+				sheet += i+":\t \n";
 			}
 			
 			//add information about current task 
 			if (performanceOnTasks.get(currTaskNumber) == TricopaTaskPerformance.INCORRECT) {
-				sheet+= currTaskNumber+": -1" + "\n";
+				sheet+= currTaskNumber+":\t -1" + "\n";
 			}
 			else if (performanceOnTasks.get(currTaskNumber) == TricopaTaskPerformance.INCOMPLETE) {
-				sheet+= currTaskNumber+": 0" + "\n";
+				sheet+= currTaskNumber+":\t 0" + "\n";
 			}
 			else if (performanceOnTasks.get(currTaskNumber) == TricopaTaskPerformance.CORRECT) {
-				sheet+= currTaskNumber+": 1" + "\n";
+				sheet+= currTaskNumber+":\t 1" + "\n";
 			}
 			
 			lastTaskNumber = currTaskNumber;
 		}
 		return sheet;
-	}
+	}	
 	
 	/***
 	 * Construct a sorted list containing the elements of the given collection.
@@ -473,7 +501,7 @@ public class Simulation {
 
 	
 	/////////////////////////////////////////////////////////////////
-	/// FOR REPORTING AGENT INTERPRETATION OF A SINGLE SCENARIO /////
+	/// FOR REPORTING AGENT INTERPRETATION OF A SINGLE SCENARIO ///// TODO COME BACK TO THIS IF NECESSARY
 	/////////////////////////////////////////////////////////////////	
 //	/***
 //	 * 
@@ -522,31 +550,26 @@ public class Simulation {
 		/***
 		 * Default arameters
 		 */		
-		boolean VERBOSE_FILE_READING = false;
+		boolean VERBOSE_FILE_READING = false; //useful to turn on when debugging file reading
+		
 		boolean VERBOSE_AGENT = false;
 
 		boolean ADMINISTER_SINGLE_SCENARIO = false;
 		//Used iff ADMINISTER_SINGLE_SCENARIO parameter is set to true:
-		String SCENARIO_FILENAME = ""; 
-		String SCENARIO_KNOWLEDGE_FILENAME = "";
-		String SCENARIO_NONAGENTS_FILENAME = "";
+		String SCENARIO_FILENAME = null; 
+		String SCENARIO_KNOWLEDGE_FILENAME = null;
+		String SCENARIO_NONAGENTS_FILENAME = null;
 		boolean QUERY_SPECIFIC_RELATIONSHIP = false;
 		Pair<String> QUERIED_RELATIONSHIP = null;
 		
 		boolean ADMINISTER_TRICOPA_TASKS = false;
 		//Used iff ADMINISTER_TRICOPA_TASKS parameter is set to true:
-		String TRICOPA_TASKS_FILENAME = "/Tricopa_Tasks.txt";
-		String TRICOPA_KNOWLEDGE_FILENAME = "/Knowledge.txt";
-		String TRICOPA_NONAGENTS_FILENAME = "/Tricopa-Nonagents.txt";
-		String TRICOPA_ANSWERS_FILENAME = "/Tricopa_Answers.txt";
-		Set<Integer> TASK_NUMS_TO_DO = Simulation.GetRange(1, 101); //Which task numbers to do
-		
-		//Which task numbers to consider exceptions:
-		Set<Integer> TASK_NUMS_TO_REMOVE = new HashSet<Integer>();
-		TASK_NUMS_TO_REMOVE.addAll(Arrays.asList(11,20,22,43,44,91, 94,95,99)); //1-CHARACTER TASKS
-		//TASKS_TO_REMOVE.addAll(Arrays.asList(4)); //ASYMMETRIC TASKS
-		TASK_NUMS_TO_REMOVE.addAll(Arrays.asList(47,50,56,74,76,77,80,84,86,92,94,99)); //TASKS WITH 'NOT' LITERAL		
-			
+		String TRICOPA_TASKS_FILENAME = null;
+		String TRICOPA_KNOWLEDGE_FILENAME = null;
+		String TRICOPA_NONAGENTS_FILENAME = null;
+		String TRICOPA_ANSWERS_FILENAME = null;
+		String TRICOPA_EXCLUDE_FILENAME = null;
+	
 		/***
 		 * Setting params from main args
 		 */
@@ -591,6 +614,9 @@ public class Simulation {
 			TRICOPA_KNOWLEDGE_FILENAME = args[3];
 			TRICOPA_NONAGENTS_FILENAME = args[4];
 			TRICOPA_ANSWERS_FILENAME = args[5];
+			if (args.length == 7) {
+				TRICOPA_EXCLUDE_FILENAME = args[6]; //optional
+			}
 			break;
 		default:
 			throw new IllegalArgumentException();
@@ -602,43 +628,50 @@ public class Simulation {
 		 */
 		if (ADMINISTER_SINGLE_SCENARIO) {
 			/***
-			 * Spawn a social agent with knowledge from knowledge file
+			 * Spawn a social agent with knowledge
 			 */
-			Map<String, ActionKnowledge> actionKnowledgebase = Simulation.getActionKnowledgebase(SCENARIO_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
-			Set<String> knownObjectsSet = Simulation.getObjectsFromFile(SCENARIO_NONAGENTS_FILENAME);
-			AffinitybasedAgent affinitybasedAgent = new AffinitybasedAgent(actionKnowledgebase, knownObjectsSet, VERBOSE_AGENT);
+			Map<String, ActionROD> actionKnowledgebase = Simulation.getActionKnowledgebase(SCENARIO_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
+			Set<String> nonagentsSet = Simulation.getNonagentsFromFile(SCENARIO_NONAGENTS_FILENAME);
+			AffinitybasedAgent affinitybasedAgent = new AffinitybasedAgent(actionKnowledgebase, nonagentsSet, VERBOSE_AGENT);
 
 			/***
 			 * Administer story to social agent
-			 * Social agent reads the story and in real-time updates interpreted relationship information
 			 */
 			Scenario story = Simulation.getScenarioFromFile(SCENARIO_FILENAME);
-			affinitybasedAgent.read(story, false);
 			
 			/***
-			 * Print table of relationship beliefs over time regarding the indicated relationship
+			 * Social agent reads the story, possibly with a focus on the queried relationship.
 			 */
 			if (QUERY_SPECIFIC_RELATIONSHIP) {
+				affinitybasedAgent.read(story, false, QUERIED_RELATIONSHIP);
 				affinitybasedAgent.stateBelief(QUERIED_RELATIONSHIP);				
+			} else {
+				affinitybasedAgent.read(story, false);
 			}
 		} // done administering story
 		if (ADMINISTER_TRICOPA_TASKS) {		
 			/***
 			 * Spawn a social agent with knowledge from knowledge file
 			 */
-			Map<String, ActionKnowledge> actionKnowledgebase = Simulation.getActionKnowledgebase(TRICOPA_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
-			Set<String> knownObjectsSet = Simulation.getObjectsFromFile(TRICOPA_NONAGENTS_FILENAME);
-			TricopaParticipant socialAgent = new AffinitybasedAgent(actionKnowledgebase, knownObjectsSet, VERBOSE_AGENT);
+			Map<String, ActionROD> actionKnowledgebase = Simulation.getActionKnowledgebase(TRICOPA_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
+			Set<String> knownNonagents = Simulation.getNonagentsFromFile(TRICOPA_NONAGENTS_FILENAME);
+			TricopaParticipant socialAgent = new AffinitybasedAgent(actionKnowledgebase, knownNonagents, VERBOSE_AGENT);
 			
 			/***
 			 * Set up, before administering tasks to social agent
 			 */
 			Map<Integer,TricopaTask> allTricopaTasks = Simulation.getTricopaTasksFromFile(TRICOPA_TASKS_FILENAME, VERBOSE_FILE_READING);
-			Map<Integer,TricopaTask> tasksToDo = Simulation.getTasks(allTricopaTasks, TASK_NUMS_TO_DO);
-			for (Integer task_number : TASK_NUMS_TO_REMOVE) {
-				tasksToDo.remove(task_number);
-			}
 			Map<Integer,Integer> answers = Simulation.getAnswersFromFile(TRICOPA_ANSWERS_FILENAME);
+
+			Set<Integer> taskNumsToDo = GetRange(1, allTricopaTasks.size()); //Which task numbers to do
+			if (TRICOPA_EXCLUDE_FILENAME != null) { //Possibly exclude some tasks
+				Set<Integer> taskNumsToExclude = Simulation.getExclusionsFromFile(TRICOPA_EXCLUDE_FILENAME); 	//Which task numbers to consider exceptions
+				taskNumsToExclude.add(22);
+				for (Integer task_number : taskNumsToExclude) {
+					taskNumsToDo.remove(task_number);
+				}
+			}
+			Map<Integer,TricopaTask> tasksToDo = Simulation.getTasks(allTricopaTasks, taskNumsToDo);
 
 			
 			/***
@@ -652,7 +685,7 @@ public class Simulation {
 			/***
 			 * Print results
 			 */
-//			System.out.println("\n" + Simulation.getTableRepresentationOfPerformance(performanceOnTasks));
+//			System.out.println("\n" + Simulation.getTableRepresentationOfPerformance(performanceOnTasks)); TODO
 			System.out.println("" + Simulation.getScoreStatement(performanceOnTasks));
 		}//done administering Tricopa tasks
 		

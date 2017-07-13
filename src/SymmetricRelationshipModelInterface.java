@@ -10,14 +10,14 @@ public interface SymmetricRelationshipModelInterface {
 	 * Update relationship model with the action indicated by the given actionKnowledge.
 	 * @param actionKnowledge the ActionKnowledge of a specific action 
 	 */
-	public void update(ActionKnowledge actionKnowledge);
+	public void update(ActionROD actionKnowledge);
 	
 	/***
 	 * Update relationship model with the action indicated by the given actionKnowledge and 
 	 * place factor X emphasis (e.g. 2X emphasis) on this update relative to a standard update.
 	 * @param actionKnowledge the ActionKnowledge of a specific action 
 	 */
-	public void update(ActionKnowledge actionKnowledge, double factor);
+	public void update(ActionROD actionKnowledge, double factor);
 
 	
 	
@@ -33,7 +33,7 @@ public interface SymmetricRelationshipModelInterface {
 	 * @param actionKnowledge the ActionKnowledge of a specific action 
 	 * @return the probability of the action indicated by the given actionKnowledge
 	 */
-	public double probabilityOf(ActionKnowledge actionKnowledge);
+	public double probabilityOf(ActionROD actionKnowledge);
 
 	
 	

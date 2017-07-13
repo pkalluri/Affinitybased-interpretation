@@ -22,6 +22,14 @@ public class RecentlyObservedAgentsMemory {
 		this.secondToLastObservedAgent = null;
 	}
 	
+	/***
+	 * Construct new RecentlyObservedAgentsMemory from existing RecentlyObservedAgentsMemory. (like clone).
+	 */
+	public RecentlyObservedAgentsMemory(RecentlyObservedAgentsMemory other) {
+		this.lastObservedAgent = other.lastObservedAgent;
+		this.secondToLastObservedAgent = other.secondToLastObservedAgent;
+	}
+	
 	////////////////////////////////////////////////////////////
 	//////// GETTERS AND SETTERS ///////////////////////////////
 	////////////////////////////////////////////////////////////
@@ -99,13 +107,6 @@ public class RecentlyObservedAgentsMemory {
 			toReturn += this.lastObservedAgent;
 		}
 		return toReturn;
-	}
-	
-	@Override
-	public RecentlyObservedAgentsMemory clone() {
-		RecentlyObservedAgentsMemory clone = new RecentlyObservedAgentsMemory();
-		clone.setRecentlyObservedAgents(this.secondToLastObservedAgent, this.lastObservedAgent);
-		return clone;
 	}
 
 }
