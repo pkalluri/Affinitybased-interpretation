@@ -148,9 +148,9 @@ public class Simulation {
 	}	
 	
 	/***
-	 * Get the Set of task numbers to exclude from the indicated Tricopa Exclusions File.
+	 * Get the Set of task numbers to exclude from the indicated Tricopa Exclude File.
 	 * @param fileName the name of the Tricopa Exclusions File
-	 * @return the Set of task numbers to exclude from the indicated Tricopa Exclusions File
+	 * @return the Set of task numbers to exclude from the indicated Tricopa Exclude File
 	 * @throws IOException 
 	 * @throws URISyntaxException 
 	 */
