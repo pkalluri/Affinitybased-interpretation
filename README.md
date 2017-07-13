@@ -16,9 +16,9 @@ To learn more, please see the paper documenting this system:
 
 Run ```Simulation``` with arguments ```s y Scenario.txt Knowledge.txt Nonagents.txt Ria Jay```
 
-This spawns a verbose agent, prompts the agent to read the scenario in ```Scenario.txt```(applying the knowledge in ```Knowledge.txt``` and ```Nonagents.txt```), and specifically queries for the agent’s belief about the relationship between ```Ria``` and ```Jay```.
+This spawns a verbose agent and prompts the agent to read the scenario in ```Scenario.txt```(applying the knowledge in ```Knowledge.txt``` and ```Nonagents.txt```), focusing its attention on the relationship between ```Ria``` and ```Jay```.
 
-As the agent reads the scenario, it logs each event, its fixed knowledge about the action in the event, and its current beliefs about the scenario’s constituent relationships.
+As the agent reads the scenario, it logs each event relevant to either ```Ria``` or ```Jay```, its fixed knowledge about the action in the event, and its current beliefs about the relationship between ```Ria``` and ```Jay```.
 ```
                          (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
 Event                    Action R.O.D.            Beliefs about relationships 
@@ -30,24 +30,65 @@ Reflecting                                        Jay&Ria:02%|20%|78%
 ```
 When the agent finishes reading the scenario, the last log entry indicates the agent’s final beliefs.
 
-Finally, the agent responds to the posed query:
+Finally, the agent states its beliefs about the relationship between ```Ria``` and ```Jay```:
 
 ```
 I believe that the relationship between Jay&Ria is a enemy relationship with 78% confidence.
 ```
 ### To administer Macbeth
+
 Run ```Simulation``` with arguments ```s y Macbeth-Logic.txt Macbeth-Knowledge.txt Nonagents.txt LM M```
 
-Notice how the agent's perception of the relationship between ```LM``` (Lady Macbeth) and ```M``` (Macbeth) shifts over time.
-Or try swapping out ```LM``` or ```M``` for other characters, such as ```LMD``` (Lady Macduff), ```MD``` (Macduff), etc.
+Notice how the agent's perception of the relationship between ```LM``` (Lady Macbeth) and ```M``` (Macbeth) shifts over time:
+```
+                         (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
+Event                    Action R.O.D.            Beliefs about relationships 
+----------------------------------------------------------------
+LM isWife M              50%|25%|25%              LM&M:67%|17%|17% 
+M isSuccessor KD         33%|33%|33%              LM&M:67%|17%|17% 
+M defeats C              25%|25%|50%              LM&M:67%|17%|17% 
+KD becomesHappy          50%|25%|25%              LM&M:67%|17%|17% 
+M talks W                33%|33%|33%              LM&M:67%|17%|17% 
+W predict                33%|33%|33%              LM&M:67%|17%|17% 
+W predict                33%|33%|33%              LM&M:67%|17%|17% 
+W predict M              33%|33%|33%              LM&M:67%|17%|17% 
+W predict M              33%|33%|33%              LM&M:67%|17%|17% 
+M rewards                50%|25%|25%              LM&M:67%|17%|17% 
+LM asksForMorePower M    50%|25%|25%              LM&M:100%|00%|00% 
+LM persuades M           50%|25%|25%              LM&M:100%|00%|00% 
+M loves LM               50%|25%|25%              LM&M:100%|00%|00% 
+M wantsToPlease LM       50%|25%|25%              LM&M:100%|00%|00% 
+LM plotsToMurder KD      25%|25%|50%              LM&M:100%|00%|00% 
+M plotsToMurder KD       25%|25%|50%              LM&M:100%|00%|00% 
+M invitesToDinner KD     50%|25%|25%              LM&M:100%|00%|00% 
+KD compliments M         50%|25%|25%              LM&M:100%|00%|00% 
+KD goesToBed             33%|33%|33%              LM&M:100%|00%|00% 
+M murders G              25%|25%|50%              LM&M:100%|00%|00% 
+M murders KD             25%|25%|50%              LM&M:100%|00%|00% 
+MD flees                 25%|25%|50%              LM&M:100%|00%|00% 
+M murders LMD            25%|25%|50%              LM&M:100%|00%|00% 
+M hallucinates           33%|33%|33%              LM&M:100%|00%|00% 
+LM becomesDistraught     25%|25%|50%              LM&M:100%|00%|00% 
+LM hasBadDreams          25%|25%|50%              LM&M:100%|00%|00% 
+LM hallucinates          33%|33%|33%              LM&M:100%|00%|00% 
+LM commitesSuicide       25%|25%|50%              LM&M:00%|00%|100% 
+MD attacks               25%|25%|50%              LM&M:00%|00%|100% 
+MD curses M              25%|25%|50%              LM&M:00%|00%|100% 
+M refusesToSurrender     25%|25%|50%              LM&M:00%|00%|100% 
+M kills                  25%|25%|50%              LM&M:00%|00%|100% 
+Reflecting                                        LM&M:00%|00%|100% 
+```
+You can swap out ```LM``` or ```M``` for other characters, such as ```LMD``` (Lady Macduff), ```MD``` (Macduff), etc.
+
+Or you can run ```Simulation``` with arguments ```s y Macbeth-Logic.txt Macbeth-Knowledge.txt Nonagents.txt``` (omitting characters) to see the story read without focussing the agent’s attention on any specific relationship.
 
 ### To administer TriangleCOPA challenge problems
 
-Run ```Simulation``` with arguments ```t y Tricopa-Tasks.txt \Knowledge.txt Nonagents.txt Tricopa-Answers.txt```
+Run ```Simulation``` with arguments ```t y Tricopa-Tasks.txt Knowledge.txt Nonagents.txt Tricopa-Answers.txt Tricopa-Exclude.txt```
 
-This spawns a verbose agent, prompts the agent to read and answer the TriangleCOPA tasks in ```Tricopa-Tasks.txt``` (again applying the knowledge in ```Knowledge.txt``` and ```Nonagents.txt```), and evaluates the agent’s answers against the gold-standard answers in ```Tricopa-Answers.txt```.
+This spawns a verbose agent, prompts the agent to read and answer the TriangleCOPA tasks in ```Tricopa-Tasks.txt``` (except the tasks listed in ```Tricopa-Exclude.txt```) (again applying the knowledge in ```Knowledge.txt``` and ```Nonagents.txt```), and evaluates the agent’s answers against the gold-standard answers in ```Tricopa-Answers.txt```.
 
-For each TriangleCOPA task, the agent first reads the scenario and logs its evolving beliefs (as before).
+For each TriangleCOPA task, the agent first reads the TriangleCOPA scenario and logs its evolving beliefs (as before).
 ```
 ****************************************************************
 
@@ -101,10 +142,10 @@ Run ```Simulation``` with arguments ```s verbose scenario knowledge nonagents [c
 
 ```nonagents``` - the relative path of an **Nonagents File** containing known non-agents
 
-```[c1 c2]``` - optionally, the names of two characters in the scenario. The agent will focus on the relationship between these two characters: if verbose the agent will limit itself to logging its evolving beliefs about this relationship only; when finished reading the scenario, the agent will state its final beliefs about this relationship.
+```[c1 c2]``` - optionally, the names of two characters in the scenario. The agent will focus on the relationship between these two characters: if verbose the agent will limit itself to logging only events relevant to at least one of these characters and logging only beliefs about this relationship; when finished reading the scenario, the agent will state its final beliefs about this relationship.
 
 ### To administer challenge problems
-Run ```Simulation``` with arguments ```t verbose tricopatasks knowledge nonagents tricopaanswers```
+Run ```Simulation``` with arguments ```t verbose tricopatasks knowledge nonagents tricopaanswers [tricopaexcude]```
 
 ```t``` indicates **TriangleCOPA-style challenge problems mode**. Set the remaining arguments as follows:
 
@@ -116,26 +157,30 @@ Run ```Simulation``` with arguments ```t verbose tricopatasks knowledge nonagent
 
 ```nonagents``` - see above
 
-```tricopaanswers``` - the relative path of an **Tricopa Answers File** containing answers to the TriangleCOPA challenge problems
+```tricopaanswers``` - the relative path of a **Tricopa Answers File** containing answers to the TriangleCOPA challenge problems
+
+```tricopaexcude``` - optionally, the relative path of a ***Tricopa Exclude File*** containing task numbers to exclude
 
 ### Files
 
 A **Scenario File** contains a scenario in logical literal form.
-Each line describes an event and must take the form ```(action’ e# [actor] [acted-upon])```. For example: ```(playWith’ E12 Luca Lyra)``` denotes the event ”Luca plays with Lyra” and ```(dance’ E34 Alex)``` denotes the event ”Alex dances”. For an example file, see ```Scenario.txt```.
+Each line describes an event and must take the form ```(action’ e# actor [acted-upon])```. For example: ```(playWith’ E12 Luca Lyra)``` denotes the event ”Luca plays with Lyra” and ```(dance’ E34 Alex)``` denotes the event ”Alex dances”. For an example file, see ```Scenario.txt```.
 
 A **Knowledge File** contains knowledge about actions. Each line describes in what type(s) of relationship(s) a specified action is likely to occur and must take the form ```action [F][N][E]```. For example: ```relaxed FN``` denotes the knowledge that ```relaxed``` is likely to occur in Friend or Neutral relationships. For an example file, see ```Knowledge.txt```.
 
 A **Nonagents File** contains known non-agents. Each line names one known non-agent. For example: ```DOOR``` denotes the knowledge that ```DOOR``` is a known non-agent. For an example file, see ```Nonagents.txt```.
 
-A **Tricopa Tasks File** contains TriangleCOPA challenge problems in their logical literal form. For an example file, see ```Tricopa-Tasks.txt```. 
+A **Tricopa Tasks File** contains TriangleCOPA challenge problems in their logical literal form. The file format is that used by previous TriangleCOPA work. For an example file, see ```Tricopa-Tasks.txt```. 
 
-A **Tricopa Answers File** contains answers to TriangleCOPA challenge problems. For an example file, see ```Tricopa-Answers.txt```. 
+A **Tricopa Answers File** contains answers to TriangleCOPA challenge problems. Each line indicates one answer and takes the form ```task-number letter-of-correct-choice```. For example: ```1 a``` indicates the answer to TriangleCOPA task ```1``` is choice ```a``` (the first choice). For an example file, see ```Tricopa-Answers.txt```. 
+
+A **Tricopa Exclude File** contains task numbers to exclude. Each line contains any number of task numbers separated by space. For example: ```12 34``` indicates that TriangleCOPA tasks ```12``` and ```34```  should be excluded, i.e. should not be administered to the agent. Comment lines are lines beginning with ```//``` and are ignored. For an example file, see ```Tricopa-Exclude.txt```. 
 
 ## The gist of the code
 
 In case you are interested in digging into the code, the high-level code structure is as follows:
 
-The ```Simulation``` class spawns an ```AffinitybasedAgent``` and administers to the ```AffinitybasedAgent``` a ```Scenario``` or ```TricopaTasks```. To interpret either, the ```AffinitybasedAgent``` begins building an ```AffinitybasedWorldModel```. An ```AffinitybasedWorldModel``` models ```Pairs``` of encountered agents as ```SymmetricRelationshipModels```; under the hood, an ```AffinitybasedWorldModel``` is essentially mapping ```Pairs``` of encountered agents to an evolving, probabilistic understanding of the ```Pair’s``` ```RelationshipType``` (Friend, Neutral, or Enemy). During interpretation, the ```AffinitybasedAgent``` continues to update its ```AffinitybasedWorldModel```. After interpretation, the ```AffinitybasedAgent``` is able to respond to queries about the ```Scenario``` or is able to complete the ```TricopaTask```.
+The ```Simulation``` class spawns an ```AffinitybasedAgent``` and administers to the ```AffinitybasedAgent``` a ```Scenario``` or ```TricopaTasks``` (both containing ```ActionEvents```). To interpret these ```ActionEvents```, the ```AffinitybasedAgent``` applies its fixed knowledge of ```ActionRODs``` (relative observation distributions) and  begins building an ```AffinitybasedWorldModel```. An ```AffinitybasedWorldModel``` models ```Pairs``` of encountered agents as ```SymmetricRelationshipModels```; under the hood, an ```AffinitybasedWorldModel``` is essentially mapping ```Pairs``` of encountered agents to an evolving, probabilistic understanding of the ```Pair```’s ```RelationshipType``` (Friend, Neutral, or Enemy). Once the ```AffinitybasedAgent``` has completed interpretation, it is able to query its built ```AffinitybasedWorldModel``` and state its beliefs about the ```Scenario``` or complete the ```TricopaTask```.
 
 ## Author
 
@@ -143,5 +188,4 @@ Pratyusha Kalluri
 
 ## Acknowledgements
 
-Enormously grateful that I was able to do this work at the Universidad Complutense de Madrid under the guidance of Pablo Gervas! And also very grateful for the financial support of the MIT-Spain Program of the MIT International Science and Technology Initiatives (MISTI) and the IDiLyCo project funded by the Spanish Ministry of Economy, Industry, and Competitiveness
-
+Enormously grateful that I was able to do this work at the Universidad Complutense de Madrid under the guidance of Pablo Gervas! Also very grateful for the financial support of the MIT-Spain Program of the MIT International Science and Technology Initiatives (MISTI) and the IDiLyCo project funded by the Spanish Ministry of Economy, Industry, and Competitiveness
