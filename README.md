@@ -35,6 +35,7 @@ Finally, the agent responds to the posed query:
 ```
 I believe that the relationship between Jay&Ria is a enemy relationship with 78% confidence.
 ```
+(For a fun demo, run ```Simulation``` with arguments ```s y Macbeth-Logic.txt Macbeth-Knowledge.txt Nonagents.txt Ria Jay```)
 
 ### To administer TriangleCOPA challenge problems
 
@@ -84,7 +85,7 @@ CORRECT
 ## General Instructions
 
 ### To administer a scenario
-Run ```Simulation``` with arguments ```s verbose scenario knowledge nonagents```
+Run ```Simulation``` with arguments ```s verbose scenario knowledge nonagents [c1 c2]```
 
 ```s``` indicates **stand-alone scenario mode**. Set the remaining arguments as follows:
 
@@ -95,6 +96,8 @@ Run ```Simulation``` with arguments ```s verbose scenario knowledge nonagents```
 ```knowledge``` - the relative path of a **Knowledge File** containing knowledge about actions
 
 ```nonagents``` - the relative path of an **Nonagents File** containing known non-agents
+
+```[c1 c2]``` - optionally, the names of two characters in the scenario. The agent will focus on the relationship between these two characters: if verbose, the agent will limit itself to logging its evolving beliefs about this relationship; when finished reading the scenario, the agent will state its final beliefs about this relationship.
 
 ### To administer challenge problems
 Run ```Simulation``` with arguments ```t verbose tricopatasks knowledge nonagents tricopaanswers```
