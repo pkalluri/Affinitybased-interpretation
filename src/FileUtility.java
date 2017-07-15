@@ -1,7 +1,19 @@
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -12,16 +24,117 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /***
- * The FileReadingUtility contains methods to aid in this project's interpretation of expected text files. 
+ * The FileReadingUtility contains methods to aid in this project's working with text files. 
  * @author pkalluri
  *
  */
-public class FileReadingUtility {
+public class FileUtility {
+	////////////////////////////////////////////////////////////
+	//////// FOR SETTING UP FILES //////////////////////////////
+	////////////////////////////////////////////////////////////
+	
+	/***
+	 * Given the scenario in the indicated Scenario File which may or may not be in natural language,
+	 * makes a possible knowledge file with the given KNOWLEDGE_FILENAME and a possible characters file with the given CHARACTERS_FILENAME.
+	 * TODO
+	 * @param SCENARIO_FILENAME
+	 * @param NL
+	 * @param KNOWLEDGE_FILENAME
+	 * @param CHARACTERS_FILENAME
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
+	public static void setupFiles(String SCENARIO_FILENAME, boolean NL, String KNOWLEDGE_FILENAME, String CHARACTERS_FILENAME) throws URISyntaxException, IOException {
+		if ( FileUtility.fileExists(KNOWLEDGE_FILENAME)) {
+			throw new FileAlreadyExistsException(KNOWLEDGE_FILENAME);
+		}
+		if ( FileUtility.fileExists(CHARACTERS_FILENAME)) {
+			throw new FileAlreadyExistsException(CHARACTERS_FILENAME);
+		}
+		
+		Scenario story;
+		if (NL) {
+			story = FileUtility.getScenarioFromNLFile(SCENARIO_FILENAME);
+		} else {
+			story = FileUtility.getScenarioFromFile(SCENARIO_FILENAME);
+		}
+		
+		Set<String> actions = new HashSet<String>();
+		Set<String> possibleCharacters = new HashSet<String>();
+		for (ActionEvent actionEvent : story.actionEvents) {
+			actions.add(actionEvent.action);
+			possibleCharacters.add(actionEvent.actor);
+			if (actionEvent.actedUpon != null) {
+				possibleCharacters.add(actionEvent.actedUpon);
+			}
+		}
+		
+		//print to files
+		FileUtility.makeFile(actions, KNOWLEDGE_FILENAME);
+		FileUtility.makeFile(possibleCharacters, CHARACTERS_FILENAME);
+	}
+	
+//	public static void setupTricopaFiles(String SCENARIO_FILENAME, boolean NL, String KNOWLEDGE_FILENAME, String CHARACTERS_FILENAME) throws URISyntaxException, IOException {
+//		if ( FileUtility.fileExists(KNOWLEDGE_FILENAME)) {
+//			throw new FileAlreadyExistsException(KNOWLEDGE_FILENAME);
+//		}
+//		if ( FileUtility.fileExists(CHARACTERS_FILENAME)) {
+//			throw new FileAlreadyExistsException(CHARACTERS_FILENAME);
+//		}
+//		
+//		Scenario story;		
+//	}
+	
+	/***
+	 * Return true iff file already exists.
+	 * @param filename
+	 * @return
+	 */
+	private static boolean fileExists(String filename) {
+		File possibleFile = new File(filename);
+		return possibleFile.exists();
+	}
+
+	/***
+	 * Make file with the given filename containing the given lines.
+	 * @param lines
+	 * @param filename
+	 * @throws IOException
+	 */
+	private static void makeFile(Collection<String> lines, String filename) throws IOException {
+	/***
+	 * Fill knowledge file.
+	 */
+	BufferedWriter output;
+	output = new BufferedWriter(new FileWriter(filename, true));  //clears file every time
+	for (String line : lines) {
+		output.append(line);
+		output.newLine();
+	}
+	output.close();
+	}
+	
+	
 	////////////////////////////////////////////////////////////
 	//////// FOR READING IN FILES //////////////////////////////
 	////////////////////////////////////////////////////////////
+	
+	/***
+	 * Get the Scenario based on the indicated NL Scenario File.
+	 * 
+	 * @param fileName the name of the Scenario File
+	 * @return the scenario based on the indicated NL Scenario File
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
+	public static Scenario getScenarioFromNLFile(String filename) throws URISyntaxException, IOException {
+		List<String> lines = FileUtility.getLines(filename);	
+		List<ActionEvent> actionEvents = NLPUtility.getActionEvents(lines);
+		return new Scenario(actionEvents);
+	}
 	
 	/***
 	 * Get the Scenario based on the indicated Scenario File.
@@ -33,11 +146,11 @@ public class FileReadingUtility {
 	 */
 	public static Scenario getScenarioFromFile(String fileName) throws URISyntaxException, IOException {
 		String linesTogether = "";
-		List<String> lines = FileReadingUtility.getLines(fileName);	
+		List<String> lines = FileUtility.getLines(fileName);	
 		for (String line : lines) {
 			linesTogether += line.trim(); //String together lines
 		}
-		return FileReadingUtility.getScenario(linesTogether);
+		return FileUtility.getScenario(linesTogether);
 	}
 	
 	/***
@@ -51,7 +164,7 @@ public class FileReadingUtility {
 	 */
 	public static Map<Integer, TricopaTask> getTricopaTasksFromFile(String fileName, boolean verbose) throws IOException, URISyntaxException {
         Map<Integer,TricopaTask> tricopaTasks  = new HashMap<Integer,TricopaTask>();
-        List<String> lines = FileReadingUtility.getLines(fileName);	
+        List<String> lines = FileUtility.getLines(fileName);	
 		
 		int taskNumber = -1;
 		Scenario premise = null;
@@ -99,10 +212,10 @@ public class FileReadingUtility {
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
-	public static Set<String> getNonagentsFromFile(String fileName) throws URISyntaxException, IOException {
+	public static Set<String> getCharactersFromFile(String fileName) throws URISyntaxException, IOException {
     	Set<String> objects = new HashSet<String>();
     	
-        List<String> lines = FileReadingUtility.getLines(fileName);	
+        List<String> lines = FileUtility.getLines(fileName);	
     	for (String line : lines) {
     		objects.add(line.trim());
     	}
@@ -121,7 +234,7 @@ public class FileReadingUtility {
 	public static Map<Integer, Integer> getAnswersFromFile(String fileName) throws URISyntaxException, IOException {
     	Map<Integer,Integer> answers = new HashMap<Integer,Integer>();
     	
-        List<String> lines = FileReadingUtility.getLines(fileName);	
+        List<String> lines = FileUtility.getLines(fileName);	
     	for (String line : lines) {
     		if (isNumbered(line)) {
 				int taskNumber = getTaskNumber(line);
@@ -147,7 +260,7 @@ public class FileReadingUtility {
 	 */
 	public static Set<Integer> getExclusionsFromFile(String fileName) throws URISyntaxException, IOException {
 		Set<Integer> toExclude = new HashSet<Integer> ();
-        List<String> lines = FileReadingUtility.getLines(fileName);
+        List<String> lines = FileUtility.getLines(fileName);
         for (String line : lines) {
     		if (!isComment(line)) {
     			String trimmedLine = line.trim();
@@ -175,7 +288,7 @@ public class FileReadingUtility {
 		//The knowledge file is interpreted with the constraint that the ratio between two probabilities in a single action's relative observation distribution must always be 1 or this ratio:
 		double RATIO_PERMITTED_WITHIN_ROD = 2; 		
 		
-		List<String> lines = FileReadingUtility.getLines(fileName);	
+		List<String> lines = FileUtility.getLines(fileName);	
     	
 		Map<String, ActionROD> actionKnowledgebase = new HashMap<String, ActionROD>();
     	for (String line : lines) {
@@ -217,11 +330,56 @@ public class FileReadingUtility {
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 */
-	private static List<String> getLines(String fileName) throws URISyntaxException, IOException {				
-		String s = fileName;		
-		URI uri = FileReadingUtility.class.getResource(s).toURI();
-//		if (verbose) { System.out.println(uri);} //for debug
-		return Files.readAllLines(Paths.get(uri), Charset.defaultCharset());
+	private static List<String> getLines(String fileName) throws URISyntaxException, IOException {						
+//		System.out.println("getlines"); //debug
+//		if (!fileName.startsWith("/")) {
+//			fileName = "/" + fileName;//add slash
+//		}
+		
+		
+		//Alternative reading strategies that may be more useful if this project is exported as a jar
+		//and must access nearby files
+//		InputStream f = new FileInputStream(fileName);
+//		System.out.println(f);
+//		
+//		InputStream i = FileReadingUtility.class.getClass().getResourceAsStream(fileName);
+//		System.out.println(i); //for debug
+//		List<String> doc =
+//			      new BufferedReader(new InputStreamReader(i,
+//			          StandardCharsets.UTF_8)).lines().collect(Collectors.toList());		
+//		System.out.println(doc); //for debug
+//		
+//		InputStream i2 = FileReadingUtility.class.getClassLoader().getResourceAsStream(fileName);
+//		System.out.println(i2); //for debug
+//		List<String> doc2 =
+//			      new BufferedReader(new InputStreamReader(i2,
+//			          StandardCharsets.UTF_8)).lines().collect(Collectors.toList());		
+//		System.out.println(doc2); //for debug
+		List<String> lines;
+		
+//		URL url = FileUtility.class.getResource(fileName);
+//		if (url == null) {
+//			throw new FileNotFoundException(fileName);
+//		}
+//		URI uri = url.toURI();
+//		lines = Files.readAllLines(Paths.get(uri), Charset.defaultCharset());
+//		
+		
+		File f = new File(fileName);
+		lines = Files.readAllLines(f.toPath());
+		
+//		
+//		BufferedReader input;
+//		BufferedWriter output;
+//		output = new BufferedWriter(new FileWriter(filename, true));  //clears file every time
+//		for (String line : lines) {
+//			output.append(line);
+//			output.newLine();
+//		}
+//		output.close();
+//		}
+		
+		return lines;
 	}
 	
 	////////////////////////////////////////////////////////////
@@ -335,6 +493,18 @@ public class FileReadingUtility {
 
 		int taskNumber = Integer.parseInt(args[0]);
 		return taskNumber;
+	}
+	
+	/***
+	 * Test getting line from files.
+	 * @param args
+	 * @throws IOException 
+	 * @throws URISyntaxException 
+	 */
+	public static void main(String[] args) throws URISyntaxException, IOException {
+		String fileName = "Knowledge.txt";
+		System.out.println(FileUtility.getLines(fileName));
+		
 	}
 	
 }

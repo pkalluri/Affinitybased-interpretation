@@ -1,19 +1,11 @@
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NoSuchFileException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -73,9 +65,10 @@ public class Simulation {
 	 * @param answers
 	 * @param verbose
 	 * @return
+	 * @throws InsufficientActionKnowledgeException 
 	 * @throws Exception
 	 */
-	public static Map<Integer, TricopaTaskPerformance> administerTricopaTasks(TricopaParticipant socialAgent, Map<Integer, TricopaTask> tricopaTasks, Map<Integer,Integer> answers, boolean verbose) throws Exception {
+	public static Map<Integer, TricopaTaskPerformance> administerTricopaTasks(TricopaParticipant socialAgent, Map<Integer, TricopaTask> tricopaTasks, Map<Integer,Integer> answers, boolean verbose) throws InsufficientActionKnowledgeException {
 		Map<Integer,TricopaTaskPerformance> performanceOnTasks = new HashMap<Integer,TricopaTaskPerformance>();
 		
 		for (Map.Entry<Integer, TricopaTask> numberedTricopaTask : tricopaTasks.entrySet()) {
@@ -130,7 +123,7 @@ public class Simulation {
 		
 		String statement = "";
 		statement += "ON THE " + numTasks + " TASKS, THE AGENT ANSWERED " + numAnswered + "/" + numTasks + "=" + format.format((double)numAnswered/(double)(numTasks)) + "\n";
-		statement += "ON THE " + numAnswered + " TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED " + numCorrect + "/" + numAnswered + "=" + format.format((double)numCorrect/(double)(numAnswered)) + "\n";
+		statement += "ON THE " + numAnswered + " TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED " + numCorrect + "/" + numAnswered + "=" + format.format((double)numCorrect/(double)(numAnswered)) + "";
 		return statement;
 	}
 	
@@ -224,8 +217,10 @@ public class Simulation {
 	 * Files' format is assumed to adhere to the instructions in FilesFormat.txt
 	 * 
 	 * @author pkalluri
+	 * @throws IOException 
+	 * @throws URISyntaxException 
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws URISyntaxException, IOException {
 		
 
 		/***
@@ -234,12 +229,15 @@ public class Simulation {
 		boolean VERBOSE_FILE_READING = false; //useful to turn on when debugging file reading
 		
 		boolean VERBOSE_AGENT = false;
+		
+		boolean SETUP_ONLY = false;
 
 		boolean ADMINISTER_SINGLE_SCENARIO = false;
 		//Used iff ADMINISTER_SINGLE_SCENARIO parameter is set to true:
 		String SCENARIO_FILENAME = null; 
+		boolean NL_SCENARIO = false;
 		String SCENARIO_KNOWLEDGE_FILENAME = null;
-		String SCENARIO_NONAGENTS_FILENAME = null;
+		String SCENARIO_CHARACTERS_FILENAME = null;
 		boolean QUERY_SPECIFIC_RELATIONSHIP = false;
 		Pair<String> QUERIED_RELATIONSHIP = null;
 		
@@ -247,130 +245,217 @@ public class Simulation {
 		//Used iff ADMINISTER_TRICOPA_TASKS parameter is set to true:
 		String TRICOPA_TASKS_FILENAME = null;
 		String TRICOPA_KNOWLEDGE_FILENAME = null;
-		String TRICOPA_NONAGENTS_FILENAME = null;
+		String TRICOPA_CHARACTERS_FILENAME = null;
 		String TRICOPA_ANSWERS_FILENAME = null;
 		String TRICOPA_EXCLUDE_FILENAME = null;
 	
-		/***
-		 * Setting params from main args
-		 */
-		switch (args[0]) {
-		case "s":
-			ADMINISTER_SINGLE_SCENARIO = true;
-			ADMINISTER_TRICOPA_TASKS = false;
+		int numOptionalArgs = 0; //0 so far
+		try {
+			for (int i=1; i<=2; i++) {
+				switch (args[i]) {
+				case "-v":
+					if (SETUP_ONLY) { //don't allow during setup
+						System.out.println("Illegal arguments.");
+						return;
+					}
+					VERBOSE_AGENT = true;
+					numOptionalArgs ++;
+					break;
+				case "-nl":
+					NL_SCENARIO = true;
+					numOptionalArgs ++;
+					
+//					try {
+//						  new org.eclipse.cdt.utils.AR();
+//						}
+//					catch(NoClassDefFoundError e) {
+//						System.out.println("here");
+//						return;
+//					}
+					
+					try {
+						NLPUtility.getActionEvents(new ArrayList<String>());
+					} catch (Error e) {
+						System.out.println("To use the -nl argument, stanford-parser-3.8.0-models.jar and stanford-parser.jar must be on the classpath.");
+						return;
+					}
+					
+					break;
+				case "-setup":
+					if (i == 1) { //can only be first option
+						SETUP_ONLY = true;
+						numOptionalArgs ++;
+						break;
+					} else {
+						System.out.println("Illegal arguments.");
+						return;
+					}
+				}//end this arg
+			}//end all "-" style args
 			
-			switch (args[1]) {
-			case "y":
-				VERBOSE_AGENT =  true;
+			switch (args[0]) {
+			case "s":
+				ADMINISTER_SINGLE_SCENARIO = true;
+				ADMINISTER_TRICOPA_TASKS = false;
+				
+				if (SETUP_ONLY) {
+					//read main file, and create characters and knowledge file
+					SCENARIO_FILENAME = args[numOptionalArgs+1];  //after mode and setup-tag
+				} else {
+					SCENARIO_FILENAME = args[numOptionalArgs+1]; 
+					SCENARIO_KNOWLEDGE_FILENAME = args[numOptionalArgs+2];
+					SCENARIO_CHARACTERS_FILENAME = args[numOptionalArgs+3];
+					if (args.length == numOptionalArgs+5) {
+						System.out.println("Illegal arguments.");
+						return;
+					}
+					if (args.length == numOptionalArgs+6){ //optional
+						QUERY_SPECIFIC_RELATIONSHIP = true;
+						QUERIED_RELATIONSHIP = new Pair<String>(args[numOptionalArgs+4],args[numOptionalArgs+5]);
+					}
+				}
 				break;
-			case "n":
-				VERBOSE_AGENT =  false;
+			case "t":
+				ADMINISTER_SINGLE_SCENARIO = false;
+				ADMINISTER_TRICOPA_TASKS = true;
+				
+				if (SETUP_ONLY) {
+					TRICOPA_TASKS_FILENAME = args[numOptionalArgs+1];
+				} else {
+					TRICOPA_TASKS_FILENAME = args[numOptionalArgs+1];
+					TRICOPA_KNOWLEDGE_FILENAME = args[numOptionalArgs+2];
+					TRICOPA_CHARACTERS_FILENAME = args[numOptionalArgs+3];
+					TRICOPA_ANSWERS_FILENAME = args[numOptionalArgs+4];
+					if (args.length == numOptionalArgs+6) {
+						TRICOPA_EXCLUDE_FILENAME = args[numOptionalArgs+5]; //optional
+					}
+				}
 				break;
 			default:
-				throw new IllegalArgumentException();
+				System.out.println("Illegal arguments.");
+				return;
 			}
-			SCENARIO_FILENAME = args[2]; 
-			SCENARIO_KNOWLEDGE_FILENAME = args[3];
-			SCENARIO_NONAGENTS_FILENAME = args[4];
-			if (args.length==7) {
-				QUERY_SPECIFIC_RELATIONSHIP = true;
-				QUERIED_RELATIONSHIP = new Pair<String>(args[5],args[6]);
-			}
-			break;
-		case "t":
-			ADMINISTER_SINGLE_SCENARIO = false;
-			ADMINISTER_TRICOPA_TASKS = true;
-			
-			switch (args[1]) {
-			case "y":
-				VERBOSE_AGENT =  true;
-				break;
-			case "n":
-				VERBOSE_AGENT =  false;
-				break;
-			default:
-				throw new IllegalArgumentException();
-			}
-			TRICOPA_TASKS_FILENAME = args[2];
-			TRICOPA_KNOWLEDGE_FILENAME = args[3];
-			TRICOPA_NONAGENTS_FILENAME = args[4];
-			TRICOPA_ANSWERS_FILENAME = args[5];
-			if (args.length == 7) {
-				TRICOPA_EXCLUDE_FILENAME = args[6]; //optional
-			}
-			break;
-		default:
-			throw new IllegalArgumentException();
+		} catch (IndexOutOfBoundsException e) {
+			//arguments did not match expectations
+			System.out.println("Illegal arguments.");
+			return;
+		}
+					
+		try {
+			/***
+			 * Administer single story.
+			 */
+			if (ADMINISTER_SINGLE_SCENARIO) {
+				if (SETUP_ONLY) {
+					try {
+						if (NL_SCENARIO) {
+							FileUtility.setupFiles(SCENARIO_FILENAME, true, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
+						} else {
+							FileUtility.setupFiles(SCENARIO_FILENAME, false, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
+						}
+						System.out.println("Setup files have been generated.");
+					} catch (FileAlreadyExistsException e) {
+						System.out.println("Attempted to create new file " + e.getFile() + ", but a file with that name already exists.");
+						return;
+					}
+				} else {
+					/***
+					 * Spawn a social agent with knowledge
+					 */
+					Map<String, ActionROD> actionKnowledgebase = FileUtility.getActionKnowledgebase(SCENARIO_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
+					Set<String> nonagentsSet = FileUtility.getCharactersFromFile(SCENARIO_CHARACTERS_FILENAME);
+					AffinitybasedAgent affinitybasedAgent = new AffinitybasedAgent(actionKnowledgebase, nonagentsSet, VERBOSE_AGENT);
+		
+					/***
+					 * Administer story to social agent
+					 */
+					Scenario story;
+					if (!NL_SCENARIO) {
+						story = FileUtility.getScenarioFromFile(SCENARIO_FILENAME);
+					} else {
+						story = FileUtility.getScenarioFromNLFile(SCENARIO_FILENAME);
+					}
+					
+					/***
+					 * Social agent reads the story, possibly with a focus on the queried relationship.
+					 */
+					try {
+						if (QUERY_SPECIFIC_RELATIONSHIP) {
+							affinitybasedAgent.read(story, false, QUERIED_RELATIONSHIP);
+							affinitybasedAgent.stateBelief(QUERIED_RELATIONSHIP);				
+						} else {
+							affinitybasedAgent.read(story, false);
+						}
+					} catch (InsufficientActionKnowledgeException e) {
+						System.out.println("Could not continue. The Knowledge File is missing knowledge about \"" + e.getAction() + "\"");
+						return;
+					}
+				}//done reading scenario
+			} // end s mode
+			if (ADMINISTER_TRICOPA_TASKS) {	
+				if (SETUP_ONLY) {
+					System.out.println("Programmatic setup of Tricopa files is not supported");
+					return;
+	//				try {
+	//					FileUtility.setupTricopaFiles(SCENARIO_FILENAME, true, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
+	//					FileUtility.setupTricopaFiles(SCENARIO_FILENAME, false, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
+	//					System.out.println("Setup files have been generated.");
+	//				} catch (FileAlreadyExistsException e) {
+	//					System.out.println("Attempted to create new file " + e.getFile() + ", but a file with that name already exists.");
+	//					return;
+	//				}			
+				} else {
+					/***
+					 * Spawn a social agent with knowledge from knowledge file
+					 */
+					Map<String, ActionROD> actionKnowledgebase = FileUtility.getActionKnowledgebase(TRICOPA_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
+					Set<String> characters = FileUtility.getCharactersFromFile(TRICOPA_CHARACTERS_FILENAME);
+					TricopaParticipant socialAgent = new AffinitybasedAgent(actionKnowledgebase, characters, VERBOSE_AGENT);
+					
+					/***
+					 * Set up, before administering tasks to social agent
+					 */
+					Map<Integer,TricopaTask> allTricopaTasks = FileUtility.getTricopaTasksFromFile(TRICOPA_TASKS_FILENAME, VERBOSE_FILE_READING);
+					Map<Integer,Integer> answers = FileUtility.getAnswersFromFile(TRICOPA_ANSWERS_FILENAME);
+		
+					Set<Integer> taskNumsToDo = GetRange(1, allTricopaTasks.size()); //Which task numbers to do
+					if (TRICOPA_EXCLUDE_FILENAME != null) { //Possibly exclude some tasks
+						Set<Integer> taskNumsToExclude = FileUtility.getExclusionsFromFile(TRICOPA_EXCLUDE_FILENAME); 	//Which task numbers to consider exceptions
+						taskNumsToExclude.add(22);
+						for (Integer task_number : taskNumsToExclude) {
+							taskNumsToDo.remove(task_number);
+						}
+					}
+					Map<Integer,TricopaTask> tasksToDo = Simulation.getTasks(allTricopaTasks, taskNumsToDo);
+		
+					
+					/***
+					 * Administer Tricopa tasks to social agent
+					 * For each task, social agent reads the tasks, updates interpreted relationship information, and answers the task
+					 * runner reports the social agent's performance
+					 */
+					Map<Integer, TricopaTaskPerformance> performanceOnTasks;
+					try {
+						performanceOnTasks = Simulation.administerTricopaTasks(socialAgent, tasksToDo, answers, VERBOSE_AGENT);
+					} catch (InsufficientActionKnowledgeException e) {
+						System.out.println("Could not continue. The Knowledge File is missing knowledge about \"" + e.getAction() + "\"");
+						return;
+					}
+					
+					
+					/***
+					 * Print results
+					 */
+		//			System.out.println("\n" + Simulation.getTableRepresentationOfPerformance(performanceOnTasks)); TODO
+					System.out.println("" + Simulation.getScoreStatement(performanceOnTasks));
+				}//done administering Tricopa tasks
+			}//end t mode
+		} catch (NoSuchFileException e) {
+			System.out.println("File not found:" + e.getFile());
+			return;
 		}
 		
-		
-		/***
-		 * Administer single story.
-		 */
-		if (ADMINISTER_SINGLE_SCENARIO) {
-			/***
-			 * Spawn a social agent with knowledge
-			 */
-			Map<String, ActionROD> actionKnowledgebase = FileReadingUtility.getActionKnowledgebase(SCENARIO_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
-			Set<String> nonagentsSet = FileReadingUtility.getNonagentsFromFile(SCENARIO_NONAGENTS_FILENAME);
-			AffinitybasedAgent affinitybasedAgent = new AffinitybasedAgent(actionKnowledgebase, nonagentsSet, VERBOSE_AGENT);
-
-			/***
-			 * Administer story to social agent
-			 */
-			Scenario story = FileReadingUtility.getScenarioFromFile(SCENARIO_FILENAME);
-			
-			/***
-			 * Social agent reads the story, possibly with a focus on the queried relationship.
-			 */
-			if (QUERY_SPECIFIC_RELATIONSHIP) {
-				affinitybasedAgent.read(story, false, QUERIED_RELATIONSHIP);
-				affinitybasedAgent.stateBelief(QUERIED_RELATIONSHIP);				
-			} else {
-				affinitybasedAgent.read(story, false);
-			}
-		} // done administering story
-		if (ADMINISTER_TRICOPA_TASKS) {		
-			/***
-			 * Spawn a social agent with knowledge from knowledge file
-			 */
-			Map<String, ActionROD> actionKnowledgebase = FileReadingUtility.getActionKnowledgebase(TRICOPA_KNOWLEDGE_FILENAME, VERBOSE_FILE_READING);
-			Set<String> knownNonagents = FileReadingUtility.getNonagentsFromFile(TRICOPA_NONAGENTS_FILENAME);
-			TricopaParticipant socialAgent = new AffinitybasedAgent(actionKnowledgebase, knownNonagents, VERBOSE_AGENT);
-			
-			/***
-			 * Set up, before administering tasks to social agent
-			 */
-			Map<Integer,TricopaTask> allTricopaTasks = FileReadingUtility.getTricopaTasksFromFile(TRICOPA_TASKS_FILENAME, VERBOSE_FILE_READING);
-			Map<Integer,Integer> answers = FileReadingUtility.getAnswersFromFile(TRICOPA_ANSWERS_FILENAME);
-
-			Set<Integer> taskNumsToDo = GetRange(1, allTricopaTasks.size()); //Which task numbers to do
-			if (TRICOPA_EXCLUDE_FILENAME != null) { //Possibly exclude some tasks
-				Set<Integer> taskNumsToExclude = FileReadingUtility.getExclusionsFromFile(TRICOPA_EXCLUDE_FILENAME); 	//Which task numbers to consider exceptions
-				taskNumsToExclude.add(22);
-				for (Integer task_number : taskNumsToExclude) {
-					taskNumsToDo.remove(task_number);
-				}
-			}
-			Map<Integer,TricopaTask> tasksToDo = Simulation.getTasks(allTricopaTasks, taskNumsToDo);
-
-			
-			/***
-			 * Administer Tricopa tasks to social agent
-			 * For each task, social agent reads the tasks, updates interpreted relationship information, and answers the task
-			 * runner reports the social agent's performance
-			 */
-			Map<Integer,TricopaTaskPerformance> performanceOnTasks = Simulation.administerTricopaTasks(socialAgent, tasksToDo, answers, VERBOSE_AGENT);
-			
-			
-			/***
-			 * Print results
-			 */
-//			System.out.println("\n" + Simulation.getTableRepresentationOfPerformance(performanceOnTasks)); TODO
-			System.out.println("" + Simulation.getScoreStatement(performanceOnTasks));
-		}//done administering Tricopa tasks
-		
-	}
+	} //end main
 
 
 

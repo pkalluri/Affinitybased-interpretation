@@ -1,4 +1,5 @@
 
+
 /***
  * The RelationshipType enum describes the three types of relationships: Friend, Enemy, and Neutral.
  * @author pkalluri

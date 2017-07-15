@@ -1,3 +1,4 @@
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashSet;
@@ -26,7 +27,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	/***
 	 * The Strings that the agent knows refer to non-agents.
 	 */
-	private final Set<String> knownNonagents;
+	private final Set<String> characters;
 	
 	/***
 	 * The agent's memory of recently observed agents.
@@ -49,12 +50,12 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	/***
 	 * Create AffinitybasedAgent with the given actionKnowledgebase and knowledge of the given knownNonagents.
 	 * @param actionKnowledgebase the agent's knowledge about actions
-	 * @param knownNonagents the Strings that the agent knows refer to objects.
+	 * @param characters the Strings that the agent knows refer to characters
 	 * @param verbose
 	 */
-	public AffinitybasedAgent(Map<String, ActionROD> actionKnowledgebase, Set<String> knownNonagents, boolean verbose) {
+	public AffinitybasedAgent(Map<String, ActionROD> actionKnowledgebase, Set<String> characters, boolean verbose) {
 		this.actionKnowledgebase = actionKnowledgebase;
-		this.knownNonagents = knownNonagents;
+		this.characters = characters;
 		
 		this.rememberedAgents = new RecentlyObservedAgentsMemory();
 		this.rememberedWorldModel = null;
@@ -75,9 +76,9 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * into the interpretation of this scenario.
 	 * @param scenario the scenario to read
 	 * @param followupScenario true iff the agent should consider its memory from the previous scenario while building
-	 * @throws InsufficientKnowledgeException there was insufficient knowledge to read the scenario
+	 * @throws InsufficientActionKnowledgeException there was insufficient knowledge to read the scenario
 	 */
-	public void read(Scenario scenario, boolean followupScenario) throws InsufficientKnowledgeException {
+	public void read(Scenario scenario, boolean followupScenario) throws InsufficientActionKnowledgeException {
 		this.getWorldModelOf(scenario, followupScenario, false, null);
 	}
 	
@@ -89,9 +90,9 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * into the interpretation of this scenario.
 	 * @param scenario the scenario to read
 	 * @param followupScenario true iff the agent should consider its memory from the previous scenario while building
-	 * @throws InsufficientKnowledgeException there was insufficient knowledge to read the scenario
+	 * @throws InsufficientActionKnowledgeException there was insufficient knowledge to read the scenario
 	 */
-	public void read(Scenario scenario, boolean followupScenario, Pair<String> relationship) throws InsufficientKnowledgeException {
+	public void read(Scenario scenario, boolean followupScenario, Pair<String> relationship) throws InsufficientActionKnowledgeException {
 		this.getWorldModelOf(scenario, followupScenario, true, relationship);
 	}
 	
@@ -105,9 +106,9 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @param scenario the scenario to build a world model of
 	 * @param followupScenario true iff the agent should consider its memory from the previous scenario while building
 	 * @return the world model of the given scenario 
-	 * @throws InsufficientKnowledgeException there was insufficient knowledge to get a world model of the scenario
+	 * @throws InsufficientActionKnowledgeException there was insufficient knowledge to get a world model of the scenario
 	 */
-	private AffinitybasedWorldModel getWorldModelOf(Scenario scenario, boolean followupScenario, boolean focus, Pair<String> relationship) throws InsufficientKnowledgeException {
+	private AffinitybasedWorldModel getWorldModelOf(Scenario scenario, boolean followupScenario, boolean focus, Pair<String> relationship) throws InsufficientActionKnowledgeException {
 		if (verbose) {
 			this.printThreeColumnTextLine("", "(Friend|Neutral|Enemy)", "(Friend|Neutral|Enemy)");
 			this.printThreeColumnTextLine("Event", "Action R.O.D.", "Beliefs about relationships");
@@ -124,7 +125,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 		for (ActionEvent actionEvent : scenario.actionEvents ) {
 			//check for knowledge
 			if (	!actionKnowledgebase.containsKey(actionEvent.action)	) { 
-				throw new InsufficientKnowledgeException (actionEvent.action);
+				throw new InsufficientActionKnowledgeException (actionEvent.action);
 			}
 			ActionROD actionKnowledge = actionKnowledgebase.get(actionEvent.action);
 			try {
@@ -254,11 +255,11 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @param premise
 	 * @param possibleChoices
 	 * @return the number of the choice (1 or 2) thought more likely to apply now
-	 * @throws InsufficientKnowledgeException there was insufficient knowledge to get a world model of the scenario
+	 * @throws InsufficientActionKnowledgeException there was insufficient knowledge to get a world model of the scenario
 	 * @throws UndecidedAgentException the agent was unable to decide between the choices
 	 */
 	private int choiceOfPlausibleAlternatives(Scenario premise, List<Scenario> possibleChoices) 
-					throws InsufficientKnowledgeException, UndecidedAgentException {
+					throws InsufficientActionKnowledgeException, UndecidedAgentException {
 		AffinitybasedWorldModel worldModel = getWorldModelOf(premise, false, false, null);
 		RecentlyObservedAgentsMemory preChoosingMemory = new RecentlyObservedAgentsMemory(this.rememberedAgents); //clone
 		
@@ -285,7 +286,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 			for (ActionEvent actionEvent : choice.actionEvents ) {
 				//check for knowledge
 				if (	!actionKnowledgebase.containsKey(actionEvent.action)	) { 
-					throw new InsufficientKnowledgeException (actionEvent.action);
+					throw new InsufficientActionKnowledgeException (actionEvent.action);
 				}
 				ActionROD actionKnowledge = actionKnowledgebase.get(actionEvent.action);
 				
@@ -355,7 +356,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	}
 
 	@Override
-	public int doTricopaTask(TricopaTask tricopaTask) throws InsufficientKnowledgeException, UndecidedAgentException {
+	public int doTricopaTask(TricopaTask tricopaTask) throws InsufficientActionKnowledgeException, UndecidedAgentException {
 		int choice = this.choiceOfPlausibleAlternatives(tricopaTask.premise, tricopaTask.possibleChoices);
 		return choice;
 	}
@@ -479,7 +480,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @return true iff the String s refers to an agent
 	 */
 	private boolean isAgent(String s) {
-		return (s!=null && !knownNonagents.contains(s));
+		return (s!=null && this.characters.contains(s));
 	}
 	
 	////////////////////////////////////////////////////////////

@@ -1,3 +1,4 @@
+
 /***
  * A SymmetricRelationshipModel models the relationship between two agents, imposing symmetry of the relationship.
  * Symmetry of the relationship means an action committed by either agent affects the SymmetricRelationshipModel in the same way.
