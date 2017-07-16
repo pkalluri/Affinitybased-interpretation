@@ -10,13 +10,20 @@ To learn more, please see the paper documenting this system:
 
  *P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*
 
+## Setup
+
+Compile the project.
+To do this from the command line, change the working directory to the project folder then run
+
+```javac -cp src/:lib/* -d bin/ src/*```
+
 ## Quick Demos
 
 ### To administer a short scenario
 
-Run ```Simulation``` with arguments ```s y Scenario.txt Knowledge.txt Nonagents.txt Ria Jay```
+Run ```java -cp bin/:. Simulation s -v files/Scenario.txt files/Knowledge.txt files/Scenario-Characters.txt Ria Jay```
 
-This spawns a verbose agent and prompts the agent to read the scenario in ```Scenario.txt```(applying the knowledge in ```Knowledge.txt``` and ```Nonagents.txt```), focusing its attention on the relationship between ```Ria``` and ```Jay```.
+This spawns a verbose agent and prompts the agent to read the scenario in ```Scenario.txt```(applying the knowledge in ```Knowledge.txt``` and ```Scenario-Characters.txt```), focusing its attention on the relationship between ```Ria``` and ```Jay```.
 
 As the agent reads the scenario, it logs each event relevant to either ```Ria``` or ```Jay```, its fixed knowledge about the action in the event, and its current beliefs about the relationship between ```Ria``` and ```Jay```.
 ```
@@ -24,20 +31,20 @@ As the agent reads the scenario, it logs each event relevant to either ```Ria```
 Event                    Action R.O.D.            Beliefs about relationships 
 ----------------------------------------------------------------
 Jay argueWith Ria        25%|25%|50%              Jay&Ria:17%|17%|67% 
-Ria turn                 20%|40%|40%              Jay&Ria:02%|20%|78% 
-Ria exit                 33%|33%|33%              Jay&Ria:02%|20%|78% 
-Reflecting                                        Jay&Ria:02%|20%|78% 
+Ria turn                 33%|33%|33%              Jay&Ria:17%|17%|67% 
+Ria exit                 33%|33%|33%              Jay&Ria:17%|17%|67% 
+Reflecting                                        Jay&Ria:17%|17%|67% 
 ```
 When the agent finishes reading the scenario, the last log entry indicates the agent’s final beliefs.
 
 Finally, the agent states its beliefs about the relationship between ```Ria``` and ```Jay```:
 
 ```
-I believe that the relationship between Jay&Ria is a enemy relationship with 78% confidence.
+I believe that the relationship between Jay&Ria is a enemy relationship with 67% confidence.
 ```
 ### To administer Macbeth
 
-Run ```Simulation``` with arguments ```s y Macbeth-Logic.txt Macbeth-Knowledge.txt Nonagents.txt LM M```
+Run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Knowledge.txt files/Nonagents.txt LM M```
 
 Notice how the agent's perception of the relationship between ```LM``` (Lady Macbeth) and ```M``` (Macbeth) shifts over time:
 ```
@@ -80,13 +87,13 @@ Reflecting                                        LM&M:00%|00%|100%
 ```
 You can swap out ```LM``` or ```M``` for other characters, such as ```LMD``` (Lady Macduff), ```MD``` (Macduff), etc.
 
-Or you can run ```Simulation``` with arguments ```s y Macbeth-Logic.txt Macbeth-Knowledge.txt Nonagents.txt``` (omitting characters) to see the story read without focussing the agent’s attention on any specific relationship.
+Or you can run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Knowledge.txt files/Nonagents.txt``` (omitting characters) to see the story read without focussing the agent’s attention on any specific relationship.
 
 ### To administer TriangleCOPA challenge problems
 
-Run ```Simulation``` with arguments ```t y Tricopa-Tasks.txt Knowledge.txt Nonagents.txt Tricopa-Answers.txt Tricopa-Exclude.txt```
+Run ```java -cp bin/:. Simulation t -v files/Tricopa-Tasks.txt files/Knowledge.txt files/Tricopa-Characters.txt files/Tricopa-Answers.txt files/Tricopa-Exclude.txt```
 
-This spawns a verbose agent, prompts the agent to read and answer the TriangleCOPA tasks in ```Tricopa-Tasks.txt``` (except the tasks listed in ```Tricopa-Exclude.txt```) (again applying the knowledge in ```Knowledge.txt``` and ```Nonagents.txt```), and evaluates the agent’s answers against the gold-standard answers in ```Tricopa-Answers.txt```.
+This spawns a verbose agent, prompts the agent to read and answer the TriangleCOPA tasks in ```Tricopa-Tasks.txt``` (except the tasks listed in ```Tricopa-Exclude.txt```) (applying the knowledge in ```Knowledge.txt``` and ```Tricopa-Characters.txt```), and evaluates the agent’s answers against the gold-standard answers in ```Tricopa-Answers.txt```.
 
 For each TriangleCOPA task, the agent first reads the TriangleCOPA scenario and logs its evolving beliefs (as before).
 ```
@@ -120,46 +127,51 @@ When the the agent finishes reading the possible interpretations, it chooses the
 ```
 I choose interpretation 2.
 ```
-Finally, the agent’s answer is evaluated against the gold-standard answer:
+And the agent’s answer is evaluated against the gold-standard answer:
 ```
 CORRECT
 
 ****************************************************************
 ```
+After the agent has finished the last task, a score statement is printed:
+```
+ON THE 80 TASKS, THE AGENT ANSWERED 66/80=82%
+ON THE 66 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/66=80%
+```
 
 ## General Instructions
 
 ### To administer a scenario
-Run ```Simulation``` with arguments ```s verbose scenario knowledge nonagents [c1 c2]```
+Run ```java -cp bin/:. Simulation s [-v] scenario knowledge characters [c1 c2]```
 
 ```s``` indicates **stand-alone scenario mode**. Set the remaining arguments as follows:
 
-```verbose``` - ```y``` (or ```n```) to indicate the agent should (or should not) be verbose
+```-v``` - (optional) indicates the agent should be verbose
 
 ```scenario``` - the relative path of a **Scenario File** containing a scenario in logical literal form
 
 ```knowledge``` - the relative path of a **Knowledge File** containing knowledge about actions
 
-```nonagents``` - the relative path of an **Nonagents File** containing known non-agents
+```characters ``` - the relative path of a **Characters File** listing all characters
 
-```[c1 c2]``` - optionally, the names of two characters in the scenario. The agent will focus on the relationship between these two characters: if verbose the agent will limit itself to logging only events relevant to at least one of these characters and logging only beliefs about this relationship; when finished reading the scenario, the agent will state its final beliefs about this relationship.
+```c1 c2``` - (optional) the names of two characters in the scenario. The agent will focus on the relationship between these two characters: if verbose the agent will limit itself to logging only events relevant to at least one of these characters and logging only beliefs about this relationship; when finished reading the scenario, the agent will state its final beliefs about this relationship.
 
 ### To administer challenge problems
-Run ```Simulation``` with arguments ```t verbose tricopatasks knowledge nonagents tricopaanswers [tricopaexcude]```
+Run ```java -cp bin/:. Simulation t [-v] tricopatasks knowledge characters tricopaanswers [tricopaexcude]```
 
 ```t``` indicates **TriangleCOPA-style challenge problems mode**. Set the remaining arguments as follows:
 
-```verbose``` - see above
+```-v``` - see above
 
 ```tricopatasks``` - the relative path of a **Tricopa Tasks File** containing TriangleCOPA challenge problems in logical literal form
 
 ```knowledge``` - see above
 
-```nonagents``` - see above
+```characters``` - see above
 
 ```tricopaanswers``` - the relative path of a **Tricopa Answers File** containing answers to the TriangleCOPA challenge problems
 
-```tricopaexcude``` - optionally, the relative path of a ***Tricopa Exclude File*** containing task numbers to exclude
+```tricopaexcude``` - (optional) the relative path of a ***Tricopa Exclude File*** containing task numbers to exclude
 
 ### Files
 
@@ -168,7 +180,7 @@ Each line describes an event and must take the form ```(action’ e# actor [acte
 
 A **Knowledge File** contains knowledge about actions. Each line describes in what type(s) of relationship(s) a specified action is likely to occur and must take the form ```action [F][N][E]```. For example: ```relaxed FN``` denotes the knowledge that ```relaxed``` is likely to occur in Friend or Neutral relationships. For an example file, see ```Knowledge.txt```.
 
-A **Nonagents File** contains known non-agents. Each line names one known non-agent. For example: ```DOOR``` denotes the knowledge that ```DOOR``` is a known non-agent. For an example file, see ```Nonagents.txt```.
+A **Characters File** lists all characters. Each line names one known character. For example: ```Sophia``` denotes the knowledge that ```Sophia``` is a character. For chacters with spaces in their name, omit the spaces. For example: ```LadyMacbeth``` can denote the knowledge that ```Lady Macbeth``` is a character. For an example file, see ```Scenario-Characters.txt``` or ```Macbeth-Characters.txt```.
 
 A **Tricopa Tasks File** contains TriangleCOPA challenge problems in their logical literal form. The file format is that used by previous TriangleCOPA work. For an example file, see ```Tricopa-Tasks.txt```. 
 
