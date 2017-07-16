@@ -6,10 +6,6 @@ Subsequently, the agent is able to read possible interpretations of the scenario
 
 The agent is typically tested by administering [TriangleCOPA challenge problems](https://github.com/asgordon/TriangleCOPA) consisting of a scenario, a correct interpretation, and an incorrect interpretation.
 
-To learn more, please see the paper documenting this system:
-
- *P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*
-
 ## Setup
 
 Compile the project.
@@ -139,7 +135,7 @@ ON THE 80 TASKS, THE AGENT ANSWERED 66/80=82%
 ON THE 66 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/66=80%
 ```
 
-## General Instructions
+## General Use
 
 ### To administer a scenario
 Run ```java -cp bin/:. Simulation s [-v] scenario knowledge characters [c1 c2]```
@@ -188,9 +184,17 @@ A **Tricopa Answers File** contains answers to TriangleCOPA challenge problems. 
 
 A **Tricopa Exclude File** contains task numbers to exclude. Each line contains any number of task numbers separated by space. For example: ```12 34``` indicates that TriangleCOPA tasks ```12``` and ```34```  should be excluded, i.e. should not be administered to the agent. Comment lines are lines beginning with ```//``` and are ignored. For an example file, see ```Tricopa-Exclude.txt```. 
 
-## The gist of the code
+## For More Information
 
-In case you are interested in digging into the code, the high-level code structure is as follows:
+### On the theory
+
+To learn more, please see the paper documenting this system:
+
+ *P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*
+ 
+### On the code
+
+For anyone interested in digging into the code, the high-level code structure is as follows:
 
 The ```Simulation``` class spawns an ```AffinitybasedAgent``` and administers to the ```AffinitybasedAgent``` a ```Scenario``` or ```TricopaTasks``` (both containing ```ActionEvents```). To interpret these ```ActionEvents```, the ```AffinitybasedAgent``` applies its fixed knowledge of ```ActionRODs``` (relative observation distributions) and  begins building an ```AffinitybasedWorldModel```. An ```AffinitybasedWorldModel``` models ```Pairs``` of encountered agents as ```SymmetricRelationshipModels```; under the hood, an ```AffinitybasedWorldModel``` is essentially mapping ```Pairs``` of encountered agents to an evolving, probabilistic understanding of the ```Pair```’s ```RelationshipType``` (Friend, Neutral, or Enemy). Once the ```AffinitybasedAgent``` has completed interpretation, it is able to query its built ```AffinitybasedWorldModel``` and state its beliefs about the ```Scenario``` or complete the ```TricopaTask```.
 
