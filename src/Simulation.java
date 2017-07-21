@@ -209,6 +209,31 @@ public class Simulation {
 //		return null;//failed
 //	}	
 	
+	/***
+	 * Get concise representation of given map of performance on tasks.
+	 * @param performanceOnTasks
+	 * @return concise representation of given map of performance on tasks
+	 */
+	private static Map<Integer, String> getConciseRepresentationOfPerformance(
+			Map<Integer, TricopaTaskPerformance> performanceOnTasks) {
+			
+		Map<Integer, String> conciseRep = new HashMap<Integer, String>();
+		for (Map.Entry<Integer, TricopaTaskPerformance> entry : performanceOnTasks.entrySet()) {
+			switch (entry.getValue()){
+			case CORRECT:
+				conciseRep.put(entry.getKey(), "C");
+				break;
+			case INCORRECT:
+				conciseRep.put(entry.getKey(), "X");
+				break;
+			case INCOMPLETE:
+				conciseRep.put(entry.getKey(), " ");
+				break;
+			}
+		}
+		return conciseRep;
+	}
+	
 
 	/***
 	 * Given specified files, spawns a AffinitybasedAgent, administers a single Scenario or a TricopaTask set to the agent, and prints a summary of the results.
@@ -251,13 +276,9 @@ public class Simulation {
 	
 		int numOptionalArgs = 0; //0 so far
 		try {
-			for (int i=1; i<=2; i++) {
+			for (int i=1; i<args.length; i++) {
 				switch (args[i]) {
 				case "-v":
-					if (SETUP_ONLY) { //don't allow during setup
-						System.out.println("Illegal arguments.");
-						return;
-					}
 					VERBOSE_AGENT = true;
 					numOptionalArgs ++;
 					break;
@@ -282,14 +303,9 @@ public class Simulation {
 					
 					break;
 				case "-setup":
-					if (i == 1) { //can only be first option
-						SETUP_ONLY = true;
-						numOptionalArgs ++;
-						break;
-					} else {
-						System.out.println("Illegal arguments.");
-						return;
-					}
+					SETUP_ONLY = true;
+					numOptionalArgs ++;
+					break;
 				}//end this arg
 			}//end all "-" style args
 			
@@ -301,6 +317,8 @@ public class Simulation {
 				if (SETUP_ONLY) {
 					//read main file, and create characters and knowledge file
 					SCENARIO_FILENAME = args[numOptionalArgs+1];  //after mode and setup-tag
+					SCENARIO_KNOWLEDGE_FILENAME = args[numOptionalArgs+2];
+					SCENARIO_CHARACTERS_FILENAME = args[numOptionalArgs+3];
 				} else {
 					SCENARIO_FILENAME = args[numOptionalArgs+1]; 
 					SCENARIO_KNOWLEDGE_FILENAME = args[numOptionalArgs+2];
@@ -321,6 +339,8 @@ public class Simulation {
 				
 				if (SETUP_ONLY) {
 					TRICOPA_TASKS_FILENAME = args[numOptionalArgs+1];
+					TRICOPA_KNOWLEDGE_FILENAME = args[numOptionalArgs+2];
+					TRICOPA_CHARACTERS_FILENAME = args[numOptionalArgs+3];
 				} else {
 					TRICOPA_TASKS_FILENAME = args[numOptionalArgs+1];
 					TRICOPA_KNOWLEDGE_FILENAME = args[numOptionalArgs+2];
@@ -349,9 +369,9 @@ public class Simulation {
 				if (SETUP_ONLY) {
 					try {
 						if (NL_SCENARIO) {
-							FileUtility.setupFiles(SCENARIO_FILENAME, true, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
+							FileUtility.setupFiles(SCENARIO_FILENAME, true, SCENARIO_KNOWLEDGE_FILENAME, SCENARIO_CHARACTERS_FILENAME);
 						} else {
-							FileUtility.setupFiles(SCENARIO_FILENAME, false, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
+							FileUtility.setupFiles(SCENARIO_FILENAME, false, SCENARIO_KNOWLEDGE_FILENAME, SCENARIO_CHARACTERS_FILENAME);
 						}
 						System.out.println("Setup files have been generated.");
 					} catch (FileAlreadyExistsException e) {
@@ -394,7 +414,7 @@ public class Simulation {
 			} // end s mode
 			if (ADMINISTER_TRICOPA_TASKS) {	
 				if (SETUP_ONLY) {
-					System.out.println("Programmatic setup of Tricopa files is not supported");
+					System.out.println("Programmatic setup of Tricopa files is not supported.");
 					return;
 	//				try {
 	//					FileUtility.setupTricopaFiles(SCENARIO_FILENAME, true, "Setup-Knowledge.txt", "Setup-Possible-Characters.txt");
@@ -446,7 +466,7 @@ public class Simulation {
 					/***
 					 * Print results
 					 */
-		//			System.out.println("\n" + Simulation.getTableRepresentationOfPerformance(performanceOnTasks)); TODO
+					System.out.println("\n" + Simulation.getConciseRepresentationOfPerformance(performanceOnTasks));
 					System.out.println("" + Simulation.getScoreStatement(performanceOnTasks));
 				}//done administering Tricopa tasks
 			}//end t mode
@@ -456,6 +476,8 @@ public class Simulation {
 		}
 		
 	} //end main
+
+	
 
 
 
