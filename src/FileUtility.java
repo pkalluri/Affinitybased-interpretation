@@ -396,32 +396,49 @@ public class FileUtility {
 		String REFERENCE_REGEX = "e[0-9]+|E[0-9]+"; //Regex to use for matching the e# notation used when one event refers to another event
 		String LITERAL_DELIMITER = "\\(|\\)"; //Regex to use for matching the (literal) notation of literals
 		String[] literals = line.split(LITERAL_DELIMITER, 0);
+		Set<String> innerEvents = new HashSet<String>();
 		
 		for (String literal : literals) {
 			if (!literal.isEmpty()) {
+				
+				//this is the part to comment out:
+				boolean validActionEvent = true;
 				String[] args = literal.split("\\s");
-				if (args.length != 3 && args.length!=4) {
-					//ignore this literal
-				}
-				else if (args.length>=1 && isPredicate(args[0])) { //predicate
-					boolean validActionEvent = true;
-
+				if ( args.length>=3 && FileUtility.isPredicate(args[0]) ) {
+					if (innerEvents.contains(args[1]) ) {
+//						System.out.println(line);
+						validActionEvent = false; //it's an inner event, so we do not count it as having occurred
+					}
+										
 					//Turn it into an ActionEvent
 					String action = args[0].substring(0, args[0].length()-1);
 					//ignore args[1] which is the e# style tag
 					String actor = args[2];
 					if (actor.matches(REFERENCE_REGEX)) {
+						innerEvents.add(actor); //update list of inner events
 						validActionEvent = false;
-					} 
+					}
 					
 					String actedUpon = null; //for now
 					if (args.length == 4) { //there is an actedUpon
 						actedUpon = args[3];
 						if (actedUpon.matches(REFERENCE_REGEX)) {
+//							actedUpon = "(EVENT)";
+							innerEvents.add(actedUpon); //update list of inner events
 							actedUpon = null;
-//							validActionEvent = false;
+//							System.out.println("Problem args: " + Arrays.asList(args)); //debug what kind of literals are being ignored
 						}
 					}
+					
+					if (args.length > 4) {
+						throw new RuntimeException(literal);
+					}
+					//update list of inner events
+//					for (int i=2; i<args.length; i++) {
+//						if (args[i].matches(REFERENCE_REGEX)) {
+//							innerEvents.add(args[i]);
+//						}
+//					}
 					
 					if (validActionEvent) {
 						scenarioUnits.add(new ActionEvent(actor, action, actedUpon));
@@ -429,6 +446,37 @@ public class FileUtility {
 //						System.out.println("Problem args: " + Arrays.asList(args)); //debug what kind of literals are being ignored
 					}
 				}
+				
+				//this is the part to comment in:
+//				String[] args = literal.split("\\s");
+//				if (args.length>=3 && isPredicate(args[0])) { //parseable
+//					boolean validActionEvent = true;
+//
+//					//Turn it into an ActionEvent
+//					String action = args[0].substring(0, args[0].length()-1);
+//					//ignore args[1] which is the e# style tag
+//					String actor = args[2];
+//					if (actor.matches(REFERENCE_REGEX)) {
+//						validActionEvent = false;
+//					} 
+//					
+//					String actedUpon = null; //for now
+//					if (args.length == 4) { //there is an actedUpon
+//						actedUpon = args[3];
+//						if (actedUpon.matches(REFERENCE_REGEX)) {
+////							actedUpon = "(EVENT)";
+//							actedUpon = null;
+////							System.out.println("Problem args: " + Arrays.asList(args)); //debug what kind of literals are being ignored
+//						}
+//					}
+//					
+//					if (validActionEvent) {
+//						scenarioUnits.add(new ActionEvent(actor, action, actedUpon));
+//					} else {
+////						System.out.println("Problem args: " + Arrays.asList(args)); //debug what kind of literals are being ignored
+//					}
+//				}
+				
 				
 			}//done creating description unit
 		}//done with all literals in this line
@@ -444,7 +492,9 @@ public class FileUtility {
 		
 		Collection<String> PREDICATES_TO_IGNORE = new ArrayList<String>();
 		PREDICATES_TO_IGNORE.add("par'");
-//		PREDICATES_TO_IGNORE.add("goal'");
+		PREDICATES_TO_IGNORE.add("seq'");
+
+		PREDICATES_TO_IGNORE.add("goal'");
 		
 		return string.endsWith(PREDICATE_END_TAG) && !PREDICATES_TO_IGNORE.contains(string);
 	}
