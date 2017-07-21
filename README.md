@@ -9,12 +9,12 @@ The agent is typically tested by administering [TriangleCOPA challenge problems]
 ## Setup
 
 Because this repository includes large external jars (the Stanford NLP parser and models), setup must be done as follows:
-* Install [git lfs](https://git-lfs.github.com/)
-* To clone the project from the command line, run 
+1. Install [git lfs](https://git-lfs.github.com/)
+2. To clone the project from the command line, change the working directory to the directory where you would like the project folder to appear, then run 
 ```
 git lfs clone  https://github.com/pkalluri/Affinitybased-interpretation
 ```
-* To compile the project from the command line, change the working directory to the project folder then run
+3. To compile the project from the command line, change the working directory to the project folder, then run
 ```
 javac -cp src/:lib/* -d bin/ src/*
 ```
