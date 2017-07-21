@@ -1,12 +1,12 @@
 # Affinity-based Interpretation of Social Scenarios
 
-We present a computational agent that is able to read a social scenario and deploy Bayesian inference to deduce the affinities (Friend, Neutral, or Enemy) of the scenario’s constituent relationships.
+We present a computational agent that is able to read a social scenario (typically in logical literal form or optionally in natural language) and deploy Bayesian inference to deduce the affinities (Friend, Neutral, or Enemy) of the scenario’s constituent relationships.
 
 Subsequently, the agent is able to read possible interpretations of the scenario and choose which interpretation it believes to be correct.
 
-The agent is typically tested by administering [TriangleCOPA challenge problems](https://github.com/asgordon/TriangleCOPA) consisting of a scenario, a correct interpretation, and an incorrect interpretation.
+The agent is typically tested by administering [TriangleCOPA challenge problems](https://github.com/asgordon/TriangleCOPA) consisting of a scenario, a correct interpretation, and an incorrect interpretation in logical literal form.
 
-## Setup System
+## Setup
 
 Compile the project.
 To do this from the command line, change the working directory to the project folder then run
@@ -15,7 +15,7 @@ To do this from the command line, change the working directory to the project fo
 
 ## Quick Demos
 
-### To administer a short scenario
+### To administer a short logical literal scenario
 
 Run ```java -cp bin/:. Simulation s -v files/Scenario.txt files/Knowledge.txt files/Scenario-Characters.txt Ria Jay```
 
@@ -38,11 +38,10 @@ Finally, the agent states its beliefs about the relationship between ```Ria``` a
 ```
 I believe that the relationship between Jay&Ria is a enemy relationship with 67% confidence.
 ```
-### To administer Macbeth
+### To administer logical literal Macbeth and natural language Macbeth
 
-Run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Logic-Knowledge.txt files/Macbeth-Logic-Characters.txt LM M```
+To administer logical literal Macbeth, run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Logic-Knowledge.txt files/Macbeth-Logic-Characters.txt LM M```. You will see:
 
-Notice how the agent's perception of the relationship between ```LM``` (Lady Macbeth) and ```M``` (Macbeth) shifts over time:
 ```
                          (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
 Event                    Action R.O.D.            Beliefs about relationships 
@@ -81,9 +80,58 @@ M refusesToSurrender     25%|25%|50%              LM&M:00%|00%|100%
 M kills                  25%|25%|50%              LM&M:00%|00%|100% 
 Reflecting                                        LM&M:00%|00%|100% 
 ```
-You can swap out ```LM``` or ```M``` for other characters, such as ```LMD``` (Lady Macduff), ```MD``` (Macduff), etc.
 
-Or you can run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Knowledge.txt files/Nonagents.txt``` (omitting characters) to see the story read without focussing the agent’s attention on any specific relationship.
+To administer natural language Macbeth, run ```java -cp bin/:lib/*:. Simulation s -v -nl files/Macbeth-NL.txt files/Macbeth-NL-Knowledge.txt files/Macbeth-NL-Characters.txt LadyMacbeth Macbeth```. First, you will see the system parse natural language sentences, extracting events, for example:
+ ```
+Sentence: LadyMacbeth is Macbeth's wife.
+Extracted events: [LadyMacbeth isWifeOf Macbeth]
+```
+
+Then, you will see:
+
+```
+                                 (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
+Event                            Action R.O.D.            Beliefs about relationships 
+----------------------------------------------------------------
+LadyMacbeth isWifeOf Macbeth     50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
+Macbeth isSuccessorOf Duncan     33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+Macbeth defeats Cawdor           25%|25%|50%              Macbeth&LadyMacbeth:67%|17%|17% 
+Duncan becomesHappy              50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
+Macbeth talksWith witches        33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+witches predict                  33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+witches predict                  33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+witches predict                  33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+witches astonish Macbeth         33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+Duncan rewards Macbeth           50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
+LadyMacbeth isGreedy             25%|25%|50%              Macbeth&LadyMacbeth:67%|17%|17% 
+LadyMacbeth wants                33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
+LadyMacbeth persuades            50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
+Macbeth loves LadyMacbeth        50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth wantsPlease LadyMacbeth  50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
+LadyMacbeth plans                33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth plans                    33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth invites Duncan           50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
+Duncan praises Macbeth           50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
+Duncan goesTo bed                33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth murders guards           25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth stabs Duncan             25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macduff fleesTo England          25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth kills LadyMacduff        25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth hallucinates             33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
+LadyMacbeth becomesDistraught    25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
+LadyMacbeth hallucinates         33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
+LadyMacbeth kills herself        25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
+Macduff attacks Macbeth          25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
+Macbeth refusesSurrender         25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
+Macduff kills Macbeth            25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
+Reflecting                                                Macbeth&LadyMacbeth:00%|00%|100% 
+```
+
+In both cases, notice how the agent's perception of the relationship between Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) shifts over time.
+
+You can swap out Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) for other characters, such as Lady Macduff (```LMD```/```LadyMacduff```), Macduff (```MD```/```Macduff```), King Duncan (```KD```/```Duncan```), etc.
+
+By omitting characters from your command, you can see the story read without focussing the agent’s attention on any specific relationship.
 
 ### To administer TriangleCOPA challenge problems
 
@@ -138,13 +186,15 @@ ON THE 65 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/65=82%
 ## General Use
 
 ### To administer a scenario
-Run ```java -cp bin/:. Simulation s [-v] scenario knowledge characters [c1 c2]```
+Run ```java -cp bin/:lib/*:. Simulation s [-v] [-nl] scenario knowledge characters [c1 c2]```
 
 ```s``` indicates **stand-alone scenario mode**. Set the remaining arguments as follows:
 
 ```-v``` - (optional) indicates the agent should be verbose
 
-```scenario``` - the relative path of a **Scenario File** containing a scenario in logical literal form
+```-nl``` - (optional) indicates that the scenario is in natural language. If omitted, the scenario is assumed to be in logical literal form.
+
+```scenario``` - the relative path of a **Scenario File** containing a scenario
 
 ```knowledge``` - the relative path of a **Knowledge File** containing knowledge about actions
 
@@ -169,12 +219,16 @@ Run ```java -cp bin/:. Simulation t [-v] tricopatasks knowledge characters trico
 
 ```tricopaexcude``` - (optional) the relative path of a **Tricopa Exclude File** containing task numbers to exclude
 
-### To automatically setup template files before administering a scenario
-Run ```java -cp bin/:. Simulation s -setup scenario knowledge characters```
+### To programmatically setup required files in preparation for administering a new scenario
+Run ```java -cp bin/:lib/*:. Simulation s -setup [-nl] scenario knowledge characters```
+
+(Note that setting up required files can also be done manually, and this command is merely for user convenience)
 
 ```s``` see above. Set the remaining arguments as follows:
 
-```-v``` - see above
+```-setup``` - indicates **setup mode**
+
+```-nl``` - see above
 
 ```scenario``` - see above
 
@@ -184,8 +238,7 @@ Run ```java -cp bin/:. Simulation s -setup scenario knowledge characters```
 
 ### Files
 
-A **Scenario File** contains a scenario in logical literal form.
-Each line describes an event and must take the form ```(action’ e# actor [acted-upon])```. For example: ```(playWith’ E12 Luca Lyra)``` denotes the event ”Luca plays with Lyra” and ```(dance’ E34 Alex)``` denotes the event ”Alex dances”. For an example file, see ```Scenario.txt```.
+A **Scenario File** contains a scenario. If the Scenario File is in logical literal form, each line describes an event and must take the form ```(action’ e# actor [acted-upon])```. For example: ```(playWith’ E12 Luca Lyra)``` denotes the event ”Luca plays with Lyra” and ```(dance’ E34 Alex)``` denotes the event ”Alex dances”. For an example file in logical literal form, see ```Scenario.txt```. If the Scenario File is in natural language, each line contains one natural language sentence. For an example file in natural language, see ```Macbeth-NL.txt```.
 
 A **Knowledge File** contains knowledge about actions. Each line describes in what type(s) of relationship(s) a specified action is likely to occur and must take the form ```action [F][N][E]```. For example: ```relaxed FN``` denotes the knowledge that ```relaxed``` is likely to occur in Friend or Neutral relationships. For an example file, see ```Knowledge.txt```.
 
@@ -211,10 +264,14 @@ For anyone interested in digging into the code, the high-level code structure is
 
 The ```Simulation``` class spawns an ```AffinitybasedAgent``` and administers to the ```AffinitybasedAgent``` a ```Scenario``` or ```TricopaTasks``` (both containing ```ActionEvents```). To interpret these ```ActionEvents```, the ```AffinitybasedAgent``` applies its fixed knowledge of ```ActionRODs``` (relative observation distributions) and  begins building an ```AffinitybasedWorldModel```. An ```AffinitybasedWorldModel``` models ```Pairs``` of encountered agents as ```SymmetricRelationshipModels```; under the hood, an ```AffinitybasedWorldModel``` is essentially mapping ```Pairs``` of encountered agents to an evolving, probabilistic understanding of the ```Pair```’s ```RelationshipType``` (Friend, Neutral, or Enemy). Once the ```AffinitybasedAgent``` has completed interpretation, it is able to query its built ```AffinitybasedWorldModel``` and state its beliefs about the ```Scenario``` or complete the ```TricopaTask```.
 
+### On the NLP
+
+This system originally operated on only logical literal scenarios. Optionally operating on natural language scenarios is a later addition to the system and remains in a prototype phase. The system parses natural language sentences into typed dependencies using the **Stanford NLP parser**, then extracts events from the typed dependencies using a system-defined procedure. See the ```NLPUtility``` class.
+
 ## Author
 
 Pratyusha Kalluri
 
 ## Acknowledgements
 
-Enormously grateful that I was able to do this work at the Universidad Complutense de Madrid under the guidance of Pablo Gervas! Also very grateful for the financial support of the MIT-Spain Program of the MIT International Science and Technology Initiatives (MISTI) and the IDiLyCo project funded by the Spanish Ministry of Economy, Industry, and Competitiveness
+Enormously grateful that I was able to do this work at Universidad Complutense de Madrid under the guidance of Pablo Gervas! Also very grateful for the financial support of the MIT-Spain Program of the MIT International Science and Technology Initiatives (MISTI) and the IDiLyCo project funded by the Spanish Ministry of Economy, Industry, and Competitiveness.
