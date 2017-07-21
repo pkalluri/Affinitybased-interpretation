@@ -32,13 +32,13 @@ This spawns a verbose agent and prompts the agent to read the scenario in ```Sce
 
 As the agent reads the scenario, it logs each event relevant to either ```Ria``` or ```Jay```, its fixed knowledge about the action in the event, and its current beliefs about the relationship between ```Ria``` and ```Jay```.
 ```
-                         (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
-Event                    Action R.O.D.            Beliefs about relationships 
+                                 (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
+Event                            Action R.O.D.            Beliefs about relationships 
 ----------------------------------------------------------------
-Jay argueWith Ria        25%|25%|50%              Jay&Ria:17%|17%|67% 
-Ria turn                 33%|33%|33%              Jay&Ria:17%|17%|67% 
-Ria exit                 33%|33%|33%              Jay&Ria:17%|17%|67% 
-Reflecting                                        Jay&Ria:17%|17%|67% 
+Jay argueWith Ria                17%|17%|67%              Jay&Ria:17%|17%|67% 
+Ria turn                         33%|33%|33%              Jay&Ria:17%|17%|67% 
+Ria exit                         33%|33%|33%              Jay&Ria:17%|17%|67% 
+Reflecting                                                Jay&Ria:17%|17%|67% 
 ```
 When the agent finishes reading the scenario, the last log entry indicates the agent’s final beliefs.
 
@@ -57,42 +57,42 @@ java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Logic-Know
 You will see:
 
 ```
-                         (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
-Event                    Action R.O.D.            Beliefs about relationships 
+                                  (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
+Event                            Action R.O.D.            Beliefs about relationships 
 ----------------------------------------------------------------
-LM isWife M              50%|25%|25%              LM&M:67%|17%|17% 
-M isSuccessor KD         33%|33%|33%              LM&M:67%|17%|17% 
-M defeats C              25%|25%|50%              LM&M:67%|17%|17% 
-KD becomesHappy          50%|25%|25%              LM&M:67%|17%|17% 
-M talks W                33%|33%|33%              LM&M:67%|17%|17% 
-W predict                33%|33%|33%              LM&M:67%|17%|17% 
-W predict                33%|33%|33%              LM&M:67%|17%|17% 
-W predict M              33%|33%|33%              LM&M:67%|17%|17% 
-W predict M              33%|33%|33%              LM&M:67%|17%|17% 
-M rewards                50%|25%|25%              LM&M:67%|17%|17% 
-LM asksForMorePower M    50%|25%|25%              LM&M:100%|00%|00% 
-LM persuades M           50%|25%|25%              LM&M:100%|00%|00% 
-M loves LM               50%|25%|25%              LM&M:100%|00%|00% 
-M wantsToPlease LM       50%|25%|25%              LM&M:100%|00%|00% 
-LM plotsToMurder KD      25%|25%|50%              LM&M:100%|00%|00% 
-M plotsToMurder KD       25%|25%|50%              LM&M:100%|00%|00% 
-M invitesToDinner KD     50%|25%|25%              LM&M:100%|00%|00% 
-KD compliments M         50%|25%|25%              LM&M:100%|00%|00% 
-KD goesToBed             33%|33%|33%              LM&M:100%|00%|00% 
-M murders G              25%|25%|50%              LM&M:100%|00%|00% 
-M murders KD             25%|25%|50%              LM&M:100%|00%|00% 
-MD flees                 25%|25%|50%              LM&M:100%|00%|00% 
-M murders LMD            25%|25%|50%              LM&M:100%|00%|00% 
-M hallucinates           33%|33%|33%              LM&M:100%|00%|00% 
-LM becomesDistraught     25%|25%|50%              LM&M:100%|00%|00% 
-LM hasBadDreams          25%|25%|50%              LM&M:100%|00%|00% 
-LM hallucinates          33%|33%|33%              LM&M:100%|00%|00% 
-LM commitesSuicide       25%|25%|50%              LM&M:00%|00%|100% 
-MD attacks               25%|25%|50%              LM&M:00%|00%|100% 
-MD curses M              25%|25%|50%              LM&M:00%|00%|100% 
-M refusesToSurrender     25%|25%|50%              LM&M:00%|00%|100% 
-M kills                  25%|25%|50%              LM&M:00%|00%|100% 
-Reflecting                                        LM&M:00%|00%|100% 
+LM isWife M                      67%|17%|17%              LM&M:67%|17%|17% 
+M isSuccessor KD                 33%|33%|33%              LM&M:67%|17%|17% 
+M defeats C                      17%|17%|67%              LM&M:67%|17%|17% 
+KD becomesHappy                  67%|17%|17%              LM&M:67%|17%|17% 
+M talks W                        33%|33%|33%              LM&M:67%|17%|17% 
+W predict                        33%|33%|33%              LM&M:67%|17%|17% 
+W predict                        33%|33%|33%              LM&M:67%|17%|17% 
+W predict M                      33%|33%|33%              LM&M:67%|17%|17% 
+W predict M                      33%|33%|33%              LM&M:67%|17%|17% 
+M rewards                        67%|17%|17%              LM&M:67%|17%|17% 
+LM asksForMorePower M            67%|17%|17%              LM&M:97%|02%|02% 
+LM persuades M                   67%|17%|17%              LM&M:100%|00%|00% 
+M loves LM                       67%|17%|17%              LM&M:100%|00%|00% 
+M wantsToPlease LM               67%|17%|17%              LM&M:100%|00%|00% 
+LM plotsToMurder KD              17%|17%|67%              LM&M:100%|00%|00% 
+M plotsToMurder KD               17%|17%|67%              LM&M:100%|00%|00% 
+M invitesToDinner KD             67%|17%|17%              LM&M:100%|00%|00% 
+KD compliments M                 67%|17%|17%              LM&M:100%|00%|00% 
+KD goesToBed                     33%|33%|33%              LM&M:100%|00%|00% 
+M murders G                      17%|17%|67%              LM&M:100%|00%|00% 
+M murders KD                     17%|17%|67%              LM&M:100%|00%|00% 
+MD flees                         17%|17%|67%              LM&M:100%|00%|00% 
+M murders LMD                    17%|17%|67%              LM&M:100%|00%|00% 
+M hallucinates                   33%|33%|33%              LM&M:100%|00%|00% 
+LM becomesDistraught             17%|17%|67%              LM&M:20%|00%|80% 
+LM hasBadDreams                  17%|17%|67%              LM&M:00%|00%|100% 
+LM hallucinates                  33%|33%|33%              LM&M:00%|00%|100% 
+LM commitsSuicide                17%|17%|67%              LM&M:00%|00%|100% 
+MD attacks                       17%|17%|67%              LM&M:00%|00%|100% 
+MD curses M                      17%|17%|67%              LM&M:00%|00%|100% 
+M refusesToSurrender             17%|17%|67%              LM&M:00%|00%|100% 
+M kills                          17%|17%|67%              LM&M:00%|00%|100% 
+Reflecting                                                LM&M:00%|00%|100% 
 ```
 
 To administer natural language Macbeth, run
@@ -106,40 +106,40 @@ Extracted events: [LadyMacbeth isWifeOf Macbeth]
 ```
 Then, you will see:
 ```
-                                 (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
+                                  (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
 Event                            Action R.O.D.            Beliefs about relationships 
 ----------------------------------------------------------------
-LadyMacbeth isWifeOf Macbeth     50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
+LadyMacbeth isWifeOf Macbeth     67%|17%|17%              Macbeth&LadyMacbeth:67%|17%|17% 
 Macbeth isSuccessorOf Duncan     33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
-Macbeth defeats Cawdor           25%|25%|50%              Macbeth&LadyMacbeth:67%|17%|17% 
-Duncan becomesHappy              50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
+Macbeth defeats Cawdor           17%|17%|67%              Macbeth&LadyMacbeth:67%|17%|17% 
+Duncan becomesHappy              67%|17%|17%              Macbeth&LadyMacbeth:67%|17%|17% 
 Macbeth talksWith witches        33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
 witches predict                  33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
 witches predict                  33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
 witches predict                  33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
 witches astonish Macbeth         33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
-Duncan rewards Macbeth           50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
-LadyMacbeth isGreedy             25%|25%|50%              Macbeth&LadyMacbeth:67%|17%|17% 
+Duncan rewards Macbeth           67%|17%|17%              Macbeth&LadyMacbeth:67%|17%|17% 
+LadyMacbeth isGreedy             17%|17%|67%              Macbeth&LadyMacbeth:67%|17%|17% 
 LadyMacbeth wants                33%|33%|33%              Macbeth&LadyMacbeth:67%|17%|17% 
-LadyMacbeth persuades            50%|25%|25%              Macbeth&LadyMacbeth:67%|17%|17% 
-Macbeth loves LadyMacbeth        50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
-Macbeth wantsPlease LadyMacbeth  50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
+LadyMacbeth persuades            67%|17%|17%              Macbeth&LadyMacbeth:67%|17%|17% 
+Macbeth loves LadyMacbeth        67%|17%|17%              Macbeth&LadyMacbeth:97%|02%|02% 
+Macbeth wantsPlease LadyMacbeth  67%|17%|17%              Macbeth&LadyMacbeth:100%|00%|00% 
 LadyMacbeth plans                33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
 Macbeth plans                    33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
-Macbeth invites Duncan           50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
-Duncan praises Macbeth           50%|25%|25%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth invites Duncan           67%|17%|17%              Macbeth&LadyMacbeth:100%|00%|00% 
+Duncan praises Macbeth           67%|17%|17%              Macbeth&LadyMacbeth:100%|00%|00% 
 Duncan goesTo bed                33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
-Macbeth murders guards           25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
-Macbeth stabs Duncan             25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
-Macduff fleesTo England          25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
-Macbeth kills LadyMacduff        25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth murders guards           17%|17%|67%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth stabs Duncan             17%|17%|67%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macduff fleesTo England          17%|17%|67%              Macbeth&LadyMacbeth:100%|00%|00% 
+Macbeth kills LadyMacduff        17%|17%|67%              Macbeth&LadyMacbeth:100%|00%|00% 
 Macbeth hallucinates             33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
-LadyMacbeth becomesDistraught    25%|25%|50%              Macbeth&LadyMacbeth:100%|00%|00% 
-LadyMacbeth hallucinates         33%|33%|33%              Macbeth&LadyMacbeth:100%|00%|00% 
-LadyMacbeth kills herself        25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
-Macduff attacks Macbeth          25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
-Macbeth refusesSurrender         25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
-Macduff kills Macbeth            25%|25%|50%              Macbeth&LadyMacbeth:00%|00%|100% 
+LadyMacbeth becomesDistraught    17%|17%|67%              Macbeth&LadyMacbeth:00%|00%|100% 
+LadyMacbeth hallucinates         33%|33%|33%              Macbeth&LadyMacbeth:00%|00%|100% 
+LadyMacbeth kills herself        17%|17%|67%              Macbeth&LadyMacbeth:00%|00%|100% 
+Macduff attacks Macbeth          17%|17%|67%              Macbeth&LadyMacbeth:00%|00%|100% 
+Macbeth refusesSurrender         17%|17%|67%              Macbeth&LadyMacbeth:00%|00%|100% 
+Macduff kills Macbeth            17%|17%|67%              Macbeth&LadyMacbeth:00%|00%|100% 
 Reflecting                                                Macbeth&LadyMacbeth:00%|00%|100% 
 ```
 
@@ -147,8 +147,6 @@ In both cases, notice how the agent's perception of the relationship between Lad
 
 You can swap out Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) for other characters, such as Lady Macduff (```LMD```/```LadyMacduff```), Macduff (```MD```/```Macduff```), King Duncan (```KD```/```Duncan```), etc.
 By omitting characters from your command, you can see the story read without focussing the agent’s attention on any specific relationship.
-
-You might notice that some relationships in Macbeth seem to be less accurately modeled than relationships modeled in the above short scenario and the below TriangleCOPA challenge problems. We hypothesize that this is because Macbeth is a longer, evolving story not a short, simple, scenario, so the simulated agent may accumulate a large quantity of evidence for a particular underlying affinity (e.g. Macbeth and Duncan are happy, invite, and praise certainly leads to the near-certain belief that they are friends),  and an increasingly large quantity of evidence is necessary to overturn that belief (e.g. ```Macbeth stabs Duncan``` is a single event and does not overturn the near-certain belief that Macbeth and Duncan are friends).
 
 ### To administer TriangleCOPA challenge problems
 
@@ -164,28 +162,28 @@ For each TriangleCOPA task, the agent first reads the TriangleCOPA scenario and 
 ****************************************************************
 
 TASK 5
-                         (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
-Event                    Action R.O.D.            Beliefs about relationships 
+                                 (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
+Event                            Action R.O.D.            Beliefs about relationships 
 ----------------------------------------------------------------
-BT inside                33%|33%|33%               
-C inside                 33%|33%|33%              BT&C:33%|33%|33% 
-BT argueWith C           25%|25%|50%              BT&C:10%|10%|80% 
-BT exit                  33%|33%|33%              BT&C:10%|10%|80% 
-BT close D               25%|25%|50%              BT&C:00%|00%|99% 
-C moveTo CORNER          33%|33%|33%              BT&C:00%|00%|99% 
-Reflecting                                        BT&C:00%|00%|99% 
+BT inside                        33%|33%|33%               
+C inside                         33%|33%|33%              BT&C:33%|33%|33% 
+BT argueWith C                   17%|17%|67%              BT&C:06%|06%|89% 
+BT exit                          33%|33%|33%              BT&C:06%|06%|89% 
+BT close D                       17%|17%|67%              BT&C:00%|00%|100% 
+C moveTo CORNER                  33%|33%|33%              BT&C:00%|00%|100% 
+Reflecting                                                BT&C:00%|00%|100% 
 ```
 Next, the agent reads the two possible interpretations of the scenario and logs each event, its fixed knowledge about the action in the event, and the conditional probability ```p``` of the event given the agent’s beliefs about the TriangleCOPA scenario. This enables the agent to calculate the conditional probability ```P``` of each interpretation.
 ```
-Possible event           Action R.O.D.            p 
+Possible event                   Action R.O.D.            p 
 ----------------------------------------------------------------
-C happy                  50%|25%|25%              25% 
-                                                  P=25% 
+C happy                          67%|17%|17%              17% 
+                                                          P=17% 
 
-Possible event           Action R.O.D.            p 
+Possible event                   Action R.O.D.            p 
 ----------------------------------------------------------------
-C unhappy                25%|25%|50%              50% 
-                                                  P=50% 
+C unhappy                        17%|17%|67%              67% 
+                                                          P=67% 
 ```
 When the the agent finishes reading the possible interpretations, it chooses the interpretation with the higher conditional probability:
 ```
@@ -199,8 +197,8 @@ CORRECT
 ```
 After the agent has finished the last task, a score statement is printed:
 ```
-ON THE 80 TASKS, THE AGENT ANSWERED 65/80=81%
-ON THE 65 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/65=82%
+ON THE 80 TASKS, THE AGENT ANSWERED 64/80=80%
+ON THE 64 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 52/64=81%
 ```
 
 ## General Use
