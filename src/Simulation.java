@@ -466,7 +466,8 @@ public class Simulation {
 					/***
 					 * Print results
 					 */
-					System.out.println("\n" + Simulation.getConciseRepresentationOfPerformance(performanceOnTasks));
+					System.out.println(Simulation.getConciseRepresentationOfPerformance(performanceOnTasks));
+					System.out.println("****************************************************************");
 					System.out.println("" + Simulation.getScoreStatement(performanceOnTasks));
 				}//done administering Tricopa tasks
 			}//end t mode
