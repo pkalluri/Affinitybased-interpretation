@@ -285,7 +285,7 @@ A **Tricopa Exclude File** contains task numbers to exclude. Each line contains 
 
 To learn more, please see the paper documenting this system:
 
- *P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*
+[*P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*](http://www.scitepress.org/DigitalLibrary/PublicationsDetail.aspx?ID=l5g7xHmN%2fRM%3d&t=1)
  
 ### On the code
 
