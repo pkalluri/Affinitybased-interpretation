@@ -8,16 +8,25 @@ The agent is typically tested by administering [TriangleCOPA challenge problems]
 
 ## Setup
 
-Compile the project.
-To do this from the command line, change the working directory to the project folder then run
-
-```javac -cp src/:lib/* -d bin/ src/*```
+Because this repository includes large external jars (the Stanford NLP parser and models), setup must be done as follows:
+1. Install [git lfs](https://git-lfs.github.com/)
+2. To clone the project from the command line, change the working directory to the directory where you would like the project folder to appear, then run 
+```
+git lfs clone  https://github.com/pkalluri/Affinitybased-interpretation
+```
+3. To compile the project from the command line, change the working directory to the project folder, then run
+```
+javac -cp src/:lib/* -d bin/ src/*
+```
 
 ## Quick Demos
 
 ### To administer a short logical literal scenario
 
-Run ```java -cp bin/:. Simulation s -v files/Scenario.txt files/Knowledge.txt files/Scenario-Characters.txt Ria Jay```
+Run
+```
+java -cp bin/:. Simulation s -v files/Scenario.txt files/Knowledge.txt files/Scenario-Characters.txt Ria Jay
+```
 
 This spawns a verbose agent and prompts the agent to read the scenario in ```Scenario.txt```(applying the knowledge in ```Knowledge.txt``` and ```Scenario-Characters.txt```), focusing its attention on the relationship between ```Ria``` and ```Jay```.
 
@@ -40,7 +49,12 @@ I believe that the relationship between Jay&Ria is a enemy relationship with 67%
 ```
 ### To administer logical literal Macbeth and natural language Macbeth
 
-To administer logical literal Macbeth, run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Logic-Knowledge.txt files/Macbeth-Logic-Characters.txt LM M```. You will see:
+To administer logical literal Macbeth, run
+```
+java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Logic-Knowledge.txt files/Macbeth-Logic-Characters.txt LM M
+```
+
+You will see:
 
 ```
                          (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
@@ -81,14 +95,16 @@ M kills                  25%|25%|50%              LM&M:00%|00%|100%
 Reflecting                                        LM&M:00%|00%|100% 
 ```
 
-To administer natural language Macbeth, run ```java -cp bin/:lib/*:. Simulation s -v -nl files/Macbeth-NL.txt files/Macbeth-NL-Knowledge.txt files/Macbeth-NL-Characters.txt LadyMacbeth Macbeth```. First, you will see the system parse natural language sentences, extracting events, for example:
- ```
+To administer natural language Macbeth, run
+```
+java -cp bin/:lib/*:. Simulation s -v -nl files/Macbeth-NL.txt files/Macbeth-NL-Knowledge.txt files/Macbeth-NL-Characters.txt LadyMacbeth Macbeth
+```
+First, you will see the system parse natural language sentences, extracting events, for example:
+```
 Sentence: LadyMacbeth is Macbeth's wife.
 Extracted events: [LadyMacbeth isWifeOf Macbeth]
 ```
-
 Then, you will see:
-
 ```
                                  (Friend|Neutral|Enemy)   (Friend|Neutral|Enemy) 
 Event                            Action R.O.D.            Beliefs about relationships 
@@ -130,12 +146,16 @@ Reflecting                                                Macbeth&LadyMacbeth:00
 In both cases, notice how the agent's perception of the relationship between Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) shifts over time.
 
 You can swap out Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) for other characters, such as Lady Macduff (```LMD```/```LadyMacduff```), Macduff (```MD```/```Macduff```), King Duncan (```KD```/```Duncan```), etc.
-
 By omitting characters from your command, you can see the story read without focussing the agent’s attention on any specific relationship.
+
+You might notice that some relationships in Macbeth seem to be less accurately modeled than relationships modeled in the above short scenario and the below TriangleCOPA challenge problems. We hypothesize that this is because Macbeth is a longer, evolving story not a short, simple, scenario, so the simulated agent may accumulate a large quantity of evidence for a particular underlying affinity (e.g. Macbeth and Duncan are happy, invite, and praise certainly leads to the near-certain belief that they are friends),  and an increasingly large quantity of evidence is necessary to overturn that belief (e.g. ```Macbeth stabs Duncan``` is a single event and does not overturn the near-certain belief that Macbeth and Duncan are friends).
 
 ### To administer TriangleCOPA challenge problems
 
-Run ```java -cp bin/:. Simulation t -v files/Tricopa-Tasks.txt files/Knowledge.txt files/Tricopa-Characters.txt files/Tricopa-Answers.txt files/Tricopa-Exclude.txt```
+Run
+```
+java -cp bin/:. Simulation t -v files/Tricopa-Tasks.txt files/Knowledge.txt files/Tricopa-Characters.txt files/Tricopa-Answers.txt files/Tricopa-Exclude.txt
+```
 
 This spawns a verbose agent, prompts the agent to read and answer the TriangleCOPA tasks in ```Tricopa-Tasks.txt``` (except the tasks listed in ```Tricopa-Exclude.txt```) (applying the knowledge in ```Knowledge.txt``` and ```Tricopa-Characters.txt```), and evaluates the agent’s answers against the gold-standard answers in ```Tricopa-Answers.txt```.
 
@@ -186,7 +206,10 @@ ON THE 65 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/65=82%
 ## General Use
 
 ### To administer a scenario
-Run ```java -cp bin/:lib/*:. Simulation s [-v] [-nl] scenario knowledge characters [c1 c2]```
+Run
+```
+java -cp bin/:lib/*:. Simulation s [-v] [-nl] scenario knowledge characters [c1 c2]
+```
 
 ```s``` indicates **stand-alone scenario mode**. Set the remaining arguments as follows:
 
@@ -203,7 +226,10 @@ Run ```java -cp bin/:lib/*:. Simulation s [-v] [-nl] scenario knowledge characte
 ```c1 c2``` - (optional) the names of two characters in the scenario. The agent will focus on the relationship between these two characters: if verbose the agent will limit itself to logging only events relevant to at least one of these characters and logging only beliefs about this relationship; when finished reading the scenario, the agent will state its final beliefs about this relationship.
 
 ### To administer challenge problems
-Run ```java -cp bin/:. Simulation t [-v] tricopatasks knowledge characters tricopaanswers [tricopaexcude]```
+Run
+```
+java -cp bin/:. Simulation t [-v] tricopatasks knowledge characters tricopaanswers [tricopaexcude]
+```
 
 ```t``` indicates **TriangleCOPA-style challenge problems mode**. Set the remaining arguments as follows:
 
@@ -220,7 +246,10 @@ Run ```java -cp bin/:. Simulation t [-v] tricopatasks knowledge characters trico
 ```tricopaexcude``` - (optional) the relative path of a **Tricopa Exclude File** containing task numbers to exclude
 
 ### To programmatically setup required files in preparation for administering a new scenario
-Run ```java -cp bin/:lib/*:. Simulation s -setup [-nl] scenario knowledge characters```
+Run
+```
+java -cp bin/:lib/*:. Simulation s -setup [-nl] scenario knowledge characters
+```
 
 (Note that setting up required files can also be done manually, and this command is merely for user convenience)
 
@@ -256,7 +285,7 @@ A **Tricopa Exclude File** contains task numbers to exclude. Each line contains 
 
 To learn more, please see the paper documenting this system:
 
- *P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*
+[*P. Kalluri, P. Gervas. Relationship Affinity-based Interpretation of Triangle Social Scenarios. International Conference on Agents and Artificial Intelligence, 2017.*](http://www.scitepress.org/DigitalLibrary/PublicationsDetail.aspx?ID=l5g7xHmN%2fRM%3d&t=1)
  
 ### On the code
 
