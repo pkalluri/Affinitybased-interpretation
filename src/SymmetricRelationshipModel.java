@@ -1,6 +1,7 @@
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -142,10 +143,14 @@ public class SymmetricRelationshipModel implements SymmetricRelationshipModelInt
 	 */
 	public String toConciseString() {
 		String toPrint = "";
-		for (Map.Entry<RelationshipType, Double> entry : this.beliefs.entrySet()) {
+		List<RelationshipType> orderedRelationshipTypes = new ArrayList<RelationshipType>();
+		orderedRelationshipTypes.add(RelationshipType.FRIEND);
+		orderedRelationshipTypes.add(RelationshipType.NEUTRAL);
+		orderedRelationshipTypes.add(RelationshipType.ENEMY);
+		for (RelationshipType relationshipType: orderedRelationshipTypes) {
 			NumberFormat format = NumberFormat.getPercentInstance();
 			format.setMinimumIntegerDigits(2);
-			toPrint += format.format(entry.getValue()) + "|";		}		
+			toPrint += format.format(this.beliefs.get(relationshipType)) + "|";		}		
 		return toPrint.substring(0,toPrint.length()-1);
 	}
 
