@@ -90,8 +90,15 @@ public class AffinitybasedWorldModel implements WorldModel{
 		 */
 		Pair<String> actingPair = new Pair<String>(actionEvent.actor, actionEvent.actedUpon);
 		SymmetricRelationshipModel relationship = affinityBeliefs.get(actingPair);
-		relationship.update(actionKnowledge, this.age + 1);
-		
+//		relationship.update(actionKnowledge, this.age + 1);
+		double emphasis;
+		if (this.affinityBeliefHistory.containsKey(actingPair)) {
+			emphasis = this.affinityBeliefHistory.get(actingPair).size();
+		} else {
+			emphasis = 0;
+		}
+		relationship.update(actionKnowledge, Math.pow(2, emphasis));
+
 		/***
 		 * Save if save parameter is ON.
 		 */
