@@ -146,8 +146,9 @@ Reflecting                                                Macbeth&LadyMacbeth:00
 In both cases, notice how the agent's perception of the relationship between Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) shifts over time.
 
 You can swap out Lady Macbeth (```LM```/```LadyMacbeth```) and Macbeth (```M```/```Macbeth```) for other characters, such as Lady Macduff (```LMD```/```LadyMacduff```), Macduff (```MD```/```Macduff```), King Duncan (```KD```/```Duncan```), etc.
-
 By omitting characters from your command, you can see the story read without focussing the agent’s attention on any specific relationship.
+
+You might notice that some relationships in Macbeth seem to be less accurately modeled than relationships modeled in the above short scenario and the below TriangleCOPA challenge problems. We hypothesize that this is because Macbeth is a longer, evolving story not a short, simple, scenario, so the simulated agent may accumulate a large quantity of evidence for a particular underlying affinity (e.g. Macbeth and Duncan are happy, invite, and praise certainly leads to the near-certain belief that they are friends),  and an increasingly large quantity of evidence is necessary to overturn that belief (e.g. ```Macbeth stabs Duncan``` is a single event and does not overturn the near-certain belief that Macbeth and Duncan are friends).
 
 ### To administer TriangleCOPA challenge problems
 
