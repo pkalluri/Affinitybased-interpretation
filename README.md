@@ -6,7 +6,7 @@ Subsequently, the agent is able to read possible interpretations of the scenario
 
 The agent is typically tested by administering [TriangleCOPA challenge problems](https://github.com/asgordon/TriangleCOPA) consisting of a scenario, a correct interpretation, and an incorrect interpretation.
 
-## Setup
+## Setup System
 
 Compile the project.
 To do this from the command line, change the working directory to the project folder then run
@@ -40,7 +40,7 @@ I believe that the relationship between Jay&Ria is a enemy relationship with 67%
 ```
 ### To administer Macbeth
 
-Run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Knowledge.txt files/Nonagents.txt LM M```
+Run ```java -cp bin/:. Simulation s -v files/Macbeth-Logic.txt files/Macbeth-Logic-Knowledge.txt files/Macbeth-Logic-Characters.txt LM M```
 
 Notice how the agent's perception of the relationship between ```LM``` (Lady Macbeth) and ```M``` (Macbeth) shifts over time:
 ```
@@ -131,8 +131,8 @@ CORRECT
 ```
 After the agent has finished the last task, a score statement is printed:
 ```
-ON THE 80 TASKS, THE AGENT ANSWERED 66/80=82%
-ON THE 66 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/66=80%
+ON THE 80 TASKS, THE AGENT ANSWERED 65/80=81%
+ON THE 65 TASKS ANSWERED, THE AGENT CORRECTLY ANSWERED 53/65=82%
 ```
 
 ## General Use
@@ -167,7 +167,20 @@ Run ```java -cp bin/:. Simulation t [-v] tricopatasks knowledge characters trico
 
 ```tricopaanswers``` - the relative path of a **Tricopa Answers File** containing answers to the TriangleCOPA challenge problems
 
-```tricopaexcude``` - (optional) the relative path of a ***Tricopa Exclude File*** containing task numbers to exclude
+```tricopaexcude``` - (optional) the relative path of a **Tricopa Exclude File** containing task numbers to exclude
+
+### To automatically setup template files before administering a scenario
+Run ```java -cp bin/:. Simulation s -setup scenario knowledge characters```
+
+```s``` see above. Set the remaining arguments as follows:
+
+```-v``` - see above
+
+```scenario``` - see above
+
+```knowledge``` - the relative path pointing to where the system should generate a new template **Knowledge File**. In this generated file, all actions will be listed with uninformative knowledge. You, the user, should then manually update the template by adding ```F```, ```N```, and ```E``` characters, making the file an accurate Knowledge File.
+
+```characters ``` - the relative path pointing to where the system should generate a new template **Characters File**. In this generated file, all possible characters will be listed. You, the user, should then manually update the template by removing non-characters, making the file an accurate Characters File.
 
 ### Files
 
@@ -176,7 +189,7 @@ Each line describes an event and must take the form ```(action’ e# actor [acte
 
 A **Knowledge File** contains knowledge about actions. Each line describes in what type(s) of relationship(s) a specified action is likely to occur and must take the form ```action [F][N][E]```. For example: ```relaxed FN``` denotes the knowledge that ```relaxed``` is likely to occur in Friend or Neutral relationships. For an example file, see ```Knowledge.txt```.
 
-A **Characters File** lists all characters. Each line names one known character. For example: ```Sophia``` denotes the knowledge that ```Sophia``` is a character. For chacters with spaces in their name, omit the spaces. For example: ```LadyMacbeth``` can denote the knowledge that ```Lady Macbeth``` is a character. For an example file, see ```Scenario-Characters.txt``` or ```Macbeth-Characters.txt```.
+A **Characters File** lists all characters. Each line names one known character. For example: ```Sophia``` denotes the knowledge that ```Sophia``` is a character. For chacters with spaces in their name, omit the spaces. For example: ```LadyMacbeth``` can denote the knowledge that ```Lady Macbeth``` is a character. For an example file, see ```Scenario-Characters.txt``` or ```Macbeth-NL-Characters.txt```.
 
 A **Tricopa Tasks File** contains TriangleCOPA challenge problems in their logical literal form. The file format is that used by previous TriangleCOPA work. For an example file, see ```Tricopa-Tasks.txt```. 
 
