@@ -1,6 +1,8 @@
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /***
@@ -82,11 +84,14 @@ public class ActionROD {
 	public String toConciseString() {
 		assert isValid();
 		String toPrint = "";
-		for (Map.Entry<RelationshipType, Double> entry : this.relativeObservationDistribution.entrySet()) {
+		List<RelationshipType> orderedRelationshipTypes = new ArrayList<RelationshipType>();
+		orderedRelationshipTypes.add(RelationshipType.FRIEND);
+		orderedRelationshipTypes.add(RelationshipType.NEUTRAL);
+		orderedRelationshipTypes.add(RelationshipType.ENEMY);
+		for (RelationshipType relationshipType: orderedRelationshipTypes) {
 			NumberFormat format = NumberFormat.getPercentInstance();
 			format.setMinimumIntegerDigits(2);
-			toPrint += format.format(entry.getValue()) + "|";
-		}		
+			toPrint += format.format(this.relativeObservationDistribution.get(relationshipType)) + "|";		}		
 		return toPrint.substring(0,toPrint.length()-1);
 	}
 		

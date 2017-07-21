@@ -494,7 +494,7 @@ public class AffinitybasedAgent implements TricopaParticipant {
 	 * @param s3 the text to be put in column 3
 	 */
 	private void printThreeColumnTextLine(String s1, String s2, String s3) {
-		System.out.format("%-24s %-24s %s %n", s1, s2, s3);
+		System.out.format("%-32s %-24s %s %n", s1, s2, s3);
 	}
 	
 	/***
