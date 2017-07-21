@@ -27,7 +27,7 @@ murders E
 hallucinates
 becomesDistraught E
 hasBadDreams E
-commitesSuicide E
+commitsSuicide E
 attacks E
 curses E
 refusesToSurrender E

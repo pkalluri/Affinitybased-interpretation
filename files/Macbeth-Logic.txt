@@ -32,7 +32,7 @@
 (becomesDistraught' E2 LM)
 (hasBadDreams' E2 LM)
 (hallucinates' E2 LM)
-(commitesSuicide' E2 LM)
+(commitsSuicide' E2 LM)
 (attacks' E2 MD)
 (curses' E2 MD M)
 (refusesToSurrender' E2 M)
