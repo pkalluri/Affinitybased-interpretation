@@ -1,25 +1,32 @@
-kills
+kills E
+isKing
 hallucinates
-enemy
-attacks
-talks
-wantsbecomeking
+becomesDistraught E
+wantsPlease F
+chanted
+isEnemyOf E
+isGreedy E
+becomesHappy F
+attacks E
 predict
-invites
-executes
-has
-thinks
-persuadeswantbecomeking
-refusessurrender
-king
-wife
-goes
-loves
-weird
-wantsplease
+wants
+invites F
+executes E
+talksWith
+isWifeOf F
+loves F
+fleesTo E
+murders E
+refusesSurrender E
+areWeird
 meet
-defeats
-fleeing
-becomeshappy
+defeats E
+plans
+persuades F
+isSuccessorOf
+stabs E
 astonish
+praises F
 danced
+rewards F
+goesTo

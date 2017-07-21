@@ -1,11 +1,9 @@
 Macbeth
-Dunsinane
-Macduff
-Witches
-Cawdor
-army
 LadyMacbeth
 witches
+Macduff
 LadyMacduff
 herself
+Cawdor
 Duncan
+guards
